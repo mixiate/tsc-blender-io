@@ -1,0 +1,146 @@
+"""The Sims Console Blender IO."""
+
+bl_info = {
+    "name": "The Sims, The Sims Bustin' Out and The Sims 2 Xbox Model Formats",
+    "description": "Import The Sims, The Sims Bustin' Out and The Sims 2 Xbox models.",
+    "author": "mix",
+    "version": (1, 0, 0),
+    "blender": (4, 1, 0),
+    "location": "File > Import-Export",
+    "warning": "",
+    "doc_url": "https://github.com/mixsims/tsc-blender-io",
+    "tracker_url": "https://github.com/mixsims/tsc-blender-io/issues",
+    "support": "COMMUNITY",
+    "category": "Import-Export",
+}
+
+
+if "bpy" in locals():
+    import sys
+    import importlib
+
+    for name in tuple(sys.modules):
+        if name.startswith(__name__ + "."):
+            importlib.reload(sys.modules[name])
+
+
+import bpy  # noqa: E402
+import bpy_extras  # noqa: E402
+import typing  # noqa: E402
+
+
+class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    """Import The Sims, The Sims Bustin' Out or The Sims 2 Xbox model."""
+
+    bl_idname: str = "import.model"
+    bl_label: str = "Import The Sims, The Sims Bustin' Out or The Sims 2 Xbox model"
+    bl_description: str = "Import The Sims, The Sims Bustin' Out or The Sims 2 Xbox model"
+    bl_options: typing.ClassVar[set[str]] = {'UNDO'}
+
+    filename_ext = ""
+
+    filter_glob: bpy.props.StringProperty(  # type: ignore[valid-type]
+        default="*",
+        options={'HIDDEN'},
+    )
+    files: bpy.props.CollectionProperty(  # type: ignore[valid-type]
+        name="File Path",
+        type=bpy.types.OperatorFileListElement,
+    )
+    directory: bpy.props.StringProperty(  # type: ignore[valid-type]
+        subtype='DIR_PATH',
+    )
+
+    def execute(self, context: bpy.context) -> set[str]:
+        """Execute the importing function."""
+        import io
+        import logging
+        import pathlib
+        from . import import_ts1
+
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+        log_stream = io.StringIO()
+        logger.addHandler(logging.StreamHandler(stream=log_stream))
+
+        directory = pathlib.Path(self.directory)
+        paths = [directory / file.name for file in self.files]
+
+        import_ts1.import_files(
+            context,
+            logger,
+            paths,
+        )
+
+        log_output = log_stream.getvalue()
+        if log_output != "":
+            self.report({"ERROR"}, log_output)
+
+        return {'FINISHED'}
+
+    def draw(self, _: bpy.context) -> None:
+        """Draw the import options ui."""
+
+
+def menu_import(self: bpy.types.TOPBAR_MT_file_import, _: bpy.context) -> None:
+    """Add an entry to the import menu."""
+    self.layout.operator(TS1IOImport.bl_idname, text="The Sims, The Sims Bustin' Out, The Sims 2 Model")
+
+
+class TS1IOAddonPreferences(bpy.types.AddonPreferences):
+    """Preferences for the addon."""
+
+    bl_idname = __name__
+
+    the_sims_texture_directory: bpy.props.StringProperty(  # type: ignore[valid-type]
+        name="The Sims Textures",
+        description="Directory for The Sims textures",
+        subtype='DIR_PATH',
+        default="",
+    )
+
+    the_sims_bustin_out_texture_directory: bpy.props.StringProperty(  # type: ignore[valid-type]
+        name="The Sims Bustin' Out Textures",
+        description="Directory for The Sims Bustin' Out textures",
+        subtype='DIR_PATH',
+        default="",
+    )
+
+    the_sims_2_texture_directory: bpy.props.StringProperty(  # type: ignore[valid-type]
+        name="The Sims 2 Textures",
+        description="Directory for The Sims 2 textures",
+        subtype='DIR_PATH',
+        default="",
+    )
+
+    def draw(self, _: bpy.context) -> None:
+        """Draw the addon preferences ui."""
+        self.layout.prop(self, "the_sims_texture_directory")
+        self.layout.prop(self, "the_sims_bustin_out_texture_directory")
+        self.layout.prop(self, "the_sims_2_texture_directory")
+
+
+classes = (
+    TS1IOImport,
+    TS1IOAddonPreferences,
+)
+
+
+def register() -> None:
+    """Register with Blender."""
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
+    bpy.types.TOPBAR_MT_file_import.append(menu_import)
+
+
+def unregister() -> None:
+    """Unregister with Blender."""
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
+
+    bpy.types.TOPBAR_MT_file_import.remove(menu_import)
+
+
+if __name__ == "__main__":
+    register()
