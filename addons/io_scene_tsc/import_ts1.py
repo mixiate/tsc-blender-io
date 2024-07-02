@@ -123,11 +123,6 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                 if file_path.stem.endswith(texture_id_string):
                     texture_loader.create_material(obj, file_path.stem, file_path)
 
-            if not obj.data.materials:
-                for file_path in texture_file_list:
-                    if file_path.stem.lower().startswith(f"{model_desc.name.lower()} "):
-                        texture_loader.create_material(obj, file_path.stem, file_path)
-
 
 def import_files(
     context: bpy.types.Context,

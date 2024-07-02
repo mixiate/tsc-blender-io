@@ -58,7 +58,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
     strip_count = struct.unpack('<I', file.read(4))[0]
     file.read(strip_count)
 
-    if game == GameType.THESIMSBUSTINOUT:
+    if game in (GameType.THESIMSBUSTINOUT, GameType.THESIMS2):
         file.read(4)
 
     positions = []
@@ -87,12 +87,20 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
                     file.read(vertex_count * 4)
 
                 if flags & 0b00001000:
-                    original_normals = [struct.unpack('<3b', file.read(3)) for _ in range(vertex_count)]
-                    for normal in original_normals:
-                        x = float(normal[0] / 127.0)
-                        y = float(normal[1] / 127.0)
-                        z = float(normal[2] / 127.0)
-                        normals.append((x, y, z))
+                    if game == GameType.THESIMS2:
+                        original_normals = [struct.unpack('<4b', file.read(4)) for _ in range(vertex_count)]
+                        for normal in original_normals:
+                            x = float(normal[0] / 127.0)
+                            y = float(normal[1] / 127.0)
+                            z = float(normal[2] / 127.0)
+                            normals.append((x, y, z))
+                    else:
+                        original_normals = [struct.unpack('<3b', file.read(3)) for _ in range(vertex_count)]
+                        for normal in original_normals:
+                            x = float(normal[0] / 127.0)
+                            y = float(normal[1] / 127.0)
+                            z = float(normal[2] / 127.0)
+                            normals.append((x, y, z))
 
                 file.read(vertex_count * 4)
 
@@ -104,7 +112,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
         if mesh_type == 2:  # noqa: PLR2004
             file.read(1)
 
-        read_blends = False
+        read_unknown = False
 
         if mesh_type in (1, 2):
             while True:
@@ -112,7 +120,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
                 if unknowns[3] == 0:
                     break
 
-                read_blends = True
+                read_unknown = True
 
         vertex_count = struct.unpack('<I', file.read(4))[0]
 
@@ -125,12 +133,23 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
             file.read(vertex_count * 4)
 
         if flags & 0b00001000:
-            original_normals = [struct.unpack('<3b', file.read(3)) for _ in range(vertex_count)]
-            for normal in original_normals:
-                x = float(normal[0] / 127.0)
-                y = float(normal[1] / 127.0)
-                z = float(normal[2] / 127.0)
-                normals.append((x, y, z))
+            if game == GameType.THESIMS2:
+                original_normals = [struct.unpack('<4b', file.read(4)) for _ in range(vertex_count)]
+                for normal in original_normals:
+                    x = float(normal[0] / 127.0)
+                    y = float(normal[1] / 127.0)
+                    z = float(normal[2] / 127.0)
+                    normals.append((x, y, z))
+            else:
+                original_normals = [struct.unpack('<3b', file.read(3)) for _ in range(vertex_count)]
+                for normal in original_normals:
+                    x = float(normal[0] / 127.0)
+                    y = float(normal[1] / 127.0)
+                    z = float(normal[2] / 127.0)
+                    normals.append((x, y, z))
+
+        if flags & 0b01000000:
+            file.read(vertex_count * 8)
 
         if flags & 0b00100000:
             index_count = struct.unpack('<I', file.read(4))[0]
@@ -141,7 +160,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
 
         previous_strip_end = previous_strip_end + vertex_count
 
-        if read_blends:
+        if read_unknown:
             file.read(vertex_count * 4)
 
     return Mesh(
@@ -221,6 +240,49 @@ def read_the_sims_bustin_out_model(file: typing.BinaryIO, name: str) -> XboxObje
     )
 
 
+def read_the_sims_2_model(file: typing.BinaryIO, name: str) -> XboxObject:
+    """Read The Sims 2 Model."""
+    file.read(2)
+
+    file.read(59)
+
+    unknown_count_1 = struct.unpack('<I', file.read(4))[0]
+    if unknown_count_1 > 0:
+        while True:
+            if struct.unpack('<I', file.read(4))[0] != 0xFFFFFFFF:  # noqa: PLR2004
+                file.seek(file.tell() - 3)
+            else:
+                file.seek(file.tell() - 8)
+                break
+    else:
+        unknown_count_2 = struct.unpack('<I', file.read(4))[0]
+        for _ in range(unknown_count_2):
+            file.read(156)
+
+        unknown_count_3 = struct.unpack('<I', file.read(4))[0]
+        for _ in range(unknown_count_3):
+            file.read(172)
+
+        unknown_count_4 = struct.unpack('<I', file.read(4))[0]
+        for _ in range(unknown_count_4):
+            file.read(28)
+
+        file.read(5)
+
+    object_count = struct.unpack('<I', file.read(4))[0]
+
+    objects = [read_object(file, GameType.THESIMS2) for _ in range(object_count)]
+
+    file.read(64)
+    file.read(8)
+
+    return XboxModel(
+        name,
+        objects,
+        GameType.THESIMS2,
+    )
+
+
 @dataclasses.dataclass
 class XboxModel:
     """Xbox Model."""
@@ -232,13 +294,22 @@ class XboxModel:
 
 def read_xbox_model(file: typing.BinaryIO) -> XboxModel:
     """Read Xbox Model."""
-    version = struct.unpack('<B', file.read(1))[0]
-    if version == 0:
-        game = GameType.THESIMS
-    elif version == 1:
-        game = GameType.THESIMSBUSTINOUT
+    version = struct.unpack('<I', file.read(4))[0]
+    if version == 0x3A:  # noqa: PLR2004
+        file.read(8)
+        version = struct.unpack('<I', file.read(4))[0]
 
-    file.read(5)
+    if version == 0x35:  # noqa: PLR2004
+        raise utils.FileReadError
+
+    if version == 0x00:
+        file.read(2)
+        game = GameType.THESIMS
+    elif version == 0x01:
+        file.read(2)
+        game = GameType.THESIMSBUSTINOUT
+    else:
+        game = GameType.THESIMS2
 
     name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
 
@@ -247,18 +318,20 @@ def read_xbox_model(file: typing.BinaryIO) -> XboxModel:
             return read_the_sims_model(file, name)
         case GameType.THESIMSBUSTINOUT:
             return read_the_sims_bustin_out_model(file, name)
+        case GameType.THESIMS2:
+            return read_the_sims_2_model(file, name)
 
 
 def read_file(file_path: pathlib.Path) -> XboxModel:
     """Read a file as an Xbox Model."""
     try:
         with file_path.open(mode='rb') as file:
-            bmf = read_xbox_model(file)
+            model = read_xbox_model(file)
 
             if len(file.read(1)) != 0:
                 raise utils.FileReadError
 
-            return bmf
+            return model
 
     except (OSError, struct.error) as exception:
         raise utils.FileReadError from exception
