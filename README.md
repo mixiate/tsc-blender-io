@@ -1,5 +1,7 @@
 TSC Blender IO is an add-on for [Blender](https://www.blender.org/) which allows you to import 3d models from The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 for Xbox.
 
+Blender 4.1.1 is supported.
+
 ### Features
 - Import models from The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 for Xbox
 - Automatically load textures (Set the directories in the add-on preferences)
