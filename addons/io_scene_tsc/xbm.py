@@ -126,7 +126,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
         positions += read_vertices(file, vertex_count)
 
         if flags & 0b00000010:
-            if flags & 0b01000000 and game == GameType.THEURBZ:
+            if flags & 0b01000000 and game in (GameType.THEURBZ, GameType.THESIMS2):
                 uv_data = [struct.unpack('<4f', file.read(16)) for _ in range(vertex_count)]
                 uvs += [(x[0], x[1]) for x in uv_data]
             else:
@@ -148,7 +148,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
                 ).normalized()
                 normals.append(normal)
 
-        if flags & 0b01000000 and game != GameType.THEURBZ:
+        if flags & 0b01000000 and game not in (GameType.THEURBZ, GameType.THESIMS2):
             file.read(vertex_count * 8)
 
         if flags & 0b00100000:
