@@ -54,7 +54,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     cleanup_meshes: bpy.props.BoolProperty(  # type: ignore[valid-type]
         name="Cleanup Meshes (Lossy)",
         description="Merge the vertices of the mesh, add sharp edges, remove original normals and shade smooth",
-        default=True,
+        default=False,
     )
 
     def execute(self, context: bpy.context) -> set[str]:
