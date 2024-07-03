@@ -51,6 +51,12 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         subtype='DIR_PATH',
     )
 
+    cleanup_meshes: bpy.props.BoolProperty(  # type: ignore[valid-type]
+        name="Cleanup Meshes (Lossy)",
+        description="Merge the vertices of the mesh, add sharp edges, remove original normals and shade smooth",
+        default=True,
+    )
+
     def execute(self, context: bpy.context) -> set[str]:
         """Execute the importing function."""
         import io
@@ -66,11 +72,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         directory = pathlib.Path(self.directory)
         paths = [directory / file.name for file in self.files]
 
-        import_ts1.import_files(
-            context,
-            logger,
-            paths,
-        )
+        import_ts1.import_files(context, logger, paths, cleanup_meshes=self.cleanup_meshes)
 
         log_output = log_stream.getvalue()
         if log_output != "":
@@ -80,11 +82,13 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     def draw(self, _: bpy.context) -> None:
         """Draw the import options ui."""
+        col = self.layout.column()
+        col.prop(self, "cleanup_meshes")
 
 
 def menu_import(self: bpy.types.TOPBAR_MT_file_import, _: bpy.context) -> None:
     """Add an entry to the import menu."""
-    self.layout.operator(TS1IOImport.bl_idname, text="The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 Model")
+    self.layout.operator(TS1IOImport.bl_idname, text="The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 Xbox Model")
 
 
 class TS1IOAddonPreferences(bpy.types.AddonPreferences):

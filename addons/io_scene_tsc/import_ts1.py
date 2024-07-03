@@ -21,13 +21,15 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
     the_sims_bustin_out_texture_list: list[pathlib.Path],
     the_urbz_texture_list: list[pathlib.Path],
     the_sims_2_texture_list: list[pathlib.Path],
-) -> None:
+) -> list[bpy.types.Object]:
     """Import an xbox model file."""
     try:
         model_desc = xbm.read_file(file_path)
     except utils.FileReadError as _:
         logger.info(f"Could not load xbox mesh {file_path}")  # noqa: G004
-        return
+        return []
+
+    object_list = []
 
     file_collection = bpy.data.collections.get(model_desc.name)
     if file_collection is None:
@@ -51,6 +53,8 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
 
             mesh = bpy.data.meshes.new(mesh_name)
             obj = bpy.data.objects.new(mesh_name, mesh)
+
+            object_list.append(obj)
 
             object_collection.objects.link(obj)
 
@@ -128,11 +132,15 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                 if file_path.stem.endswith(texture_id_string):
                     texture_loader.create_material(obj, file_path.stem, file_path)
 
+    return object_list
 
-def import_files(
+
+def import_files(  # noqa: C901
     context: bpy.types.Context,
     logger: logging.Logger,
     file_paths: list[pathlib.Path],
+    *,
+    cleanup_meshes: bool,
 ) -> None:
     """Import all the models in the selected files."""
     if bpy.ops.object.mode_set.poll():
@@ -169,8 +177,10 @@ def import_files(
         the_sims_2_texture_directory = file_paths[0].parent
     the_sims_2_texture_list = list(the_sims_2_texture_directory.glob("*.png"))
 
+    object_list = []
+
     for file_path in file_paths:
-        import_xbox_model(
+        object_list += import_xbox_model(
             context,
             logger,
             file_path,
@@ -179,3 +189,33 @@ def import_files(
             the_urbz_texture_list,
             the_sims_2_texture_list,
         )
+
+    if cleanup_meshes:
+        previous_active_object = context.view_layer.objects.active
+        bpy.ops.object.select_all(action='DESELECT')
+
+        for obj in object_list:
+            obj.select_set(state=True)
+
+        context.view_layer.objects.active = object_list[0]
+
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
+        bpy.ops.mesh.select_all(action='SELECT')
+
+        bpy.ops.mesh.merge_normals()
+        bpy.ops.mesh.remove_doubles(use_sharp_edge_from_normals=True)
+        bpy.ops.mesh.faces_shade_smooth()
+
+        bpy.ops.mesh.select_all(action='DESELECT')
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        for obj in object_list:
+            context.view_layer.objects.active = obj
+            bpy.ops.mesh.customdata_custom_splitnormals_clear()
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        context.view_layer.objects.active = previous_active_object
