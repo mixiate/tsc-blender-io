@@ -37,6 +37,255 @@ def create_material(obj: bpy.types.Object, texture_name: str, texture_file_path:
         obj.data.materials.append(material)
 
 
+def lookup_shader_texture_id_the_sims(texture_id_string: str) -> str:  # noqa: C901 PLR0911 PLR0912 PLR0915
+    """Get the corresponding texture id string if texture_id_string refers to a shader."""
+    match texture_id_string:
+        case "466ebc9":
+            return "7dd84c1a"
+        case "90d7b5fe":
+            return "8b28fcf6"
+        case "efacc883":
+            return "5b9a18fa"
+        case "10004fd7":
+            return "6c8cad96"
+        case "89091e6d":
+            return "6c8cad96"
+        case "2c2b14b2":
+            return "2561181f"
+        case "a5637b0b":
+            return "e48cac57"
+        case "c84f8c57":
+            return "c72a8402"
+        case "da83a2bc":
+            return "3d90456f"
+        case "b4781545":
+            return "65e386df"
+        case "10004fd7":
+            return "6c8cad96"
+        case "89091e6d":
+            return "6c8cad96"
+        case "fe727b39":
+            return "ae682d86"
+        case "6a789176":
+            return "fa89fd15"
+        case "466ebc9":
+            return "7dd84c1a"
+        case "10004fd7":
+            return "6c8cad96"
+        case "89091e6d":
+            return "6c8cad96"
+        case "2541ca3a":
+            return "42bfe986"
+        case "1a6a4508":
+            return "b5acf38a"
+        case "10fe3d7a":
+            return "4ade6ae6"
+        case "27286b20":
+            return "d642a386"
+        case "2c79ddce":
+            return "3cc4348f"
+        case "3b45b5e5":
+            return "2a738260"
+        case "43d7c14c":
+            return "65c702cd"
+        case "44333f82":
+            return "6abb20f2"
+        case "50fcbab7":
+            return "3cc4348f"
+        case "9a1fbcde":
+            return "52e2b2a3"
+        case "cb98196f":
+            return "fda60b13"
+        case "db6a33bd":
+            return "bf632156"
+        case "e8136bd8":
+            return "d476c00d"
+        case "6bcc5dc2":
+            return "70cf5f85"
+        case "c52dc139":
+            return "c62c2b64"
+        case "e0a8e648":
+            return "a52025e4"
+        case "e0ead657":
+            return "4c4f9b19"
+        case "fedd7f11":
+            return "e0ead657"
+        case "b4781545":
+            return "65e386df"
+        case "466ebc9":
+            return "7dd84c1a"
+        case "2c2b14b2":
+            return "2561181f"
+        case "a5637b0b":
+            return "e48cac57"
+        case "c84f8c57":
+            return "c72a8402"
+        case "da83a2bc":
+            return "3d90456f"
+        case "e523691a":
+            return "c556e676"
+        case "1acbbdc":
+            return "f116bf68"
+        case "2c1aff1":
+            return "eca92364"
+        case "42f94ba":
+            return "72a4b31d"
+        case "d760b9f":
+            return "f5695284"
+        case "15bb3e8a":
+            return "1a18ca65"
+        case "17d1ad3b":
+            return "40b79a7b"
+        case "1af0c1eb":
+            return "a2189743"
+        case "1bd20e3a":
+            return "f72f4b32"
+        case "2993cbeb":
+            return "6cba5f95"
+        case "29b27c53":
+            return "62f643ad"
+        case "2b614ecb":
+            return "6cba5f95"
+        case "4373b37d":
+            return "b5f77901"
+        case "4c721c4e":
+            return "6cba5f95"
+        case "4ccac608":
+            return "27cd4201"
+        case "51db7d2a":
+            return "2e458ed1"
+        case "52d907cb":
+            return "65f53fe3"
+        case "654d8292":
+            return "188459ed"
+        case "7dc81d03":
+            return "4917acd9"
+        case "7f8ad867":
+            return "d60fc949"
+        case "912242bb":
+            return "5e23d5b8"
+        case "9444f651":
+            return "5b656b5e"
+        case "967ab73f":
+            return "e0f19098"
+        case "977f60f3":
+            return "2bd8daa2"
+        case "9980c819":
+            return "ff5c01ac"
+        case "a3552905":
+            return "41966197"
+        case "ae93be1b":
+            return "223c5a4b"
+        case "bc13fc51":
+            return "2c23e58c"
+        case "bdcc0ddc":
+            return "5f100a0f"
+        case "bf286af3":
+            return "37ac1c6f"
+        case "c0715375":
+            return "62f643ad"
+        case "ce2d3036":
+            return "c0af5542"
+        case "ce4e7ade":
+            return "99284d9e"
+        case "ceeed9cb":
+            return "14fd025b"
+        case "cf65e336":
+            return "b9eec491"
+        case "ee2eed81":
+            return "f5695284"
+        case "ef318ce4":
+            return "cacd5421"
+        case "f09e4203":
+            return "3fb58587"
+        case "71ed3226":
+            return "1840b68a"
+        case "466ebc9":
+            return "7dd84c1a"
+        case "26d66694":
+            return "a4d3daec"
+        case "51d15602":
+            return "a4d3daec"
+        case "c8d807b8":
+            return "a4d3daec"
+        case "4afe9729":
+            return "583a48cf"
+        case "1acbbdc":
+            return "f116bf68"
+        case "2541ca3a":
+            return "42bfe986"
+        case "2c2b14b2":
+            return "2561181f"
+        case "a5637b0b":
+            return "e48cac57"
+        case "c84f8c57":
+            return "c72a8402"
+        case "da83a2bc":
+            return "3d90456f"
+        case "71ed3226":
+            return "1840b68a"
+        case "7a99dcdc":
+            return "c40f4e32"
+        case "4afe9729":
+            return "583a48cf"
+        case "466ebc9":
+            return "7dd84c1a"
+        case "183e34c6":
+            return "7fb2fc6f"
+        case "10004fd7":
+            return "6c8cad96"
+        case "89091e6d":
+            return "6c8cad96"
+        case "bc5dfe21":
+            return "54b10280"
+        case "dc222275":
+            return "d889c7ae"
+        case "79aa6203":
+            return "cccb664"
+        case "5abac3a9":
+            return "cce49970"
+        case "10004fd7":
+            return "6c8cad96"
+        case "89091e6d":
+            return "6c8cad96"
+        case "10004fd7":
+            return "6c8cad96"
+        case "89091e6d":
+            return "6c8cad96"
+        case "d9da57d2":
+            return "d5c2ba2e"
+        case "bed0ffc9":
+            return "625ad2f"
+        case "be35d0c4":
+            return "a2b792a8"
+        case "47e5d9cd":
+            return "efc9e781"
+        case "e523691a":
+            return "c556e676"
+        case "64dc35d1":
+            return "985715e4"
+        case "bd2acf79":
+            return "985715e4"
+        case "c0e532fa":
+            return "985715e4"
+        case "f5b622c8":
+            return "985715e4"
+        case "2c2b14b2":
+            return "2561181f"
+        case "a5637b0b":
+            return "e48cac57"
+        case "c84f8c57":
+            return "c72a8402"
+        case "da83a2bc":
+            return "3d90456f"
+        case "4e9dc9":
+            return "637472d7"
+        case "466ebc9":
+            return "7dd84c1a"
+
+    return texture_id_string
+
+
 def lookup_shader_texture_id_the_urbz(texture_id_string: str) -> str:  # noqa: C901 PLR0911 PLR0912 PLR0915
     """Get the corresponding texture id string if texture_id_string refers to a shader."""
     match texture_id_string:
@@ -98,8 +347,6 @@ def lookup_shader_texture_id_the_urbz(texture_id_string: str) -> str:  # noqa: C
             return "2a4303a2"
         case "88dc8ed":
             return "317714c9"
-        case "8cf295b":
-            return "17942b0a"
         case "906522f":
             return "e1c74fce"
         case "9f061e7":
@@ -254,8 +501,6 @@ def lookup_shader_texture_id_the_urbz(texture_id_string: str) -> str:  # noqa: C
             return "f41a6e6"
         case "2b599795":
             return "9e5a7c0"
-        case "b7ef272":
-            return "17942b0a"
         case "2b969d51":
             return "dca27b81"
         case "c472022":
@@ -710,8 +955,6 @@ def lookup_shader_texture_id_the_urbz(texture_id_string: str) -> str:  # noqa: C
             return "7094a716"
         case "9287a760":
             return "8791f244"
-        case "92964a4c":
-            return "29f28d35"
         case "92a015d0":
             return "497b7aef"
         case "92add4f2":
