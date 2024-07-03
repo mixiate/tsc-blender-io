@@ -111,6 +111,8 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
 
                 mesh.update()
 
+            texture_id_string = f'{mesh_desc.texture_id:x}'
+
             match model_desc.game:
                 case xbm.GameType.THESIMS:
                     texture_file_list = the_sims_texture_list
@@ -118,11 +120,10 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                     texture_file_list = the_sims_bustin_out_texture_list
                 case xbm.GameType.THEURBZ:
                     texture_file_list = the_urbz_texture_list
+                    texture_id_string = texture_loader.lookup_shader_texture_id_the_urbz(texture_id_string)
                 case xbm.GameType.THESIMS2:
                     texture_file_list = the_sims_2_texture_list
 
-            original_texture_id_string = f'{mesh_desc.texture_id:x}'
-            texture_id_string = texture_loader.lookup_shader_texture_id(original_texture_id_string)
             for file_path in texture_file_list:
                 if file_path.stem.endswith(texture_id_string):
                     texture_loader.create_material(obj, file_path.stem, file_path)

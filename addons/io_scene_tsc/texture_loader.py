@@ -37,7 +37,7 @@ def create_material(obj: bpy.types.Object, texture_name: str, texture_file_path:
         obj.data.materials.append(material)
 
 
-def lookup_shader_texture_id(texture_id_string: str) -> str:  # noqa: C901 PLR0911 PLR0912 PLR0915
+def lookup_shader_texture_id_the_urbz(texture_id_string: str) -> str:  # noqa: C901 PLR0911 PLR0912 PLR0915
     """Get the corresponding texture id string if texture_id_string refers to a shader."""
     match texture_id_string:
         case "607ed2":
