@@ -1,4 +1,4 @@
-"""Import The Sims, The Sims Bustin' Out and The Sims 2 models in to Blender."""
+"""Import The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 models in to Blender."""
 
 import bmesh
 import bpy
@@ -19,6 +19,7 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
     file_path: pathlib.Path,
     the_sims_texture_list: list[pathlib.Path],
     the_sims_bustin_out_texture_list: list[pathlib.Path],
+    the_urbz_texture_list: list[pathlib.Path],
     the_sims_2_texture_list: list[pathlib.Path],
 ) -> None:
     """Import an xbox model file."""
@@ -115,10 +116,13 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                     texture_file_list = the_sims_texture_list
                 case xbm.GameType.THESIMSBUSTINOUT:
                     texture_file_list = the_sims_bustin_out_texture_list
+                case xbm.GameType.THEURBZ:
+                    texture_file_list = the_urbz_texture_list
                 case xbm.GameType.THESIMS2:
                     texture_file_list = the_sims_2_texture_list
 
-            texture_id_string = f'{mesh_desc.texture_id:x}'
+            original_texture_id_string = f'{mesh_desc.texture_id:x}'
+            texture_id_string = texture_loader.lookup_shader_texture_id(original_texture_id_string)
             for file_path in texture_file_list:
                 if file_path.stem.endswith(texture_id_string):
                     texture_loader.create_material(obj, file_path.stem, file_path)
@@ -150,6 +154,13 @@ def import_files(
         the_sims_bustin_out_texture_directory = file_paths[0].parent
     the_sims_bustin_out_texture_list = list(the_sims_bustin_out_texture_directory.glob("*.png"))
 
+    the_urbz_texture_directory = pathlib.Path(
+        context.preferences.addons["io_scene_tsc"].preferences.the_urbz_texture_directory,
+    )
+    if the_urbz_texture_directory == "":
+        the_urbz_texture_directory = file_paths[0].parent
+    the_urbz_texture_list = list(the_urbz_texture_directory.glob("*.png"))
+
     the_sims_2_texture_directory = pathlib.Path(
         context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_texture_directory,
     )
@@ -164,5 +175,6 @@ def import_files(
             file_path,
             the_sims_texture_list,
             the_sims_bustin_out_texture_list,
+            the_urbz_texture_list,
             the_sims_2_texture_list,
         )

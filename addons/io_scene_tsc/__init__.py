@@ -1,8 +1,8 @@
 """The Sims Console Blender IO."""
 
 bl_info = {
-    "name": "The Sims, The Sims Bustin' Out and The Sims 2 Xbox Model Formats",
-    "description": "Import The Sims, The Sims Bustin' Out and The Sims 2 Xbox models.",
+    "name": "The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 Xbox Model Formats",
+    "description": "Import The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 Xbox models.",
     "author": "mix",
     "version": (1, 0, 0),
     "blender": (4, 1, 0),
@@ -30,11 +30,11 @@ import typing  # noqa: E402
 
 
 class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
-    """Import The Sims, The Sims Bustin' Out or The Sims 2 Xbox model."""
+    """Import The Sims, The Sims Bustin' Out, The Urbz or The Sims 2 Xbox model."""
 
     bl_idname: str = "import.model"
-    bl_label: str = "Import The Sims, The Sims Bustin' Out or The Sims 2 Xbox model"
-    bl_description: str = "Import The Sims, The Sims Bustin' Out or The Sims 2 Xbox model"
+    bl_label: str = "Import The Sims, The Sims Bustin' Out, The Urbz or The Sims 2 Xbox model"
+    bl_description: str = "Import The Sims, The Sims Bustin' Out, The Urbz or The Sims 2 Xbox model"
     bl_options: typing.ClassVar[set[str]] = {'UNDO'}
 
     filename_ext = ""
@@ -84,7 +84,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
 def menu_import(self: bpy.types.TOPBAR_MT_file_import, _: bpy.context) -> None:
     """Add an entry to the import menu."""
-    self.layout.operator(TS1IOImport.bl_idname, text="The Sims, The Sims Bustin' Out, The Sims 2 Model")
+    self.layout.operator(TS1IOImport.bl_idname, text="The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 Model")
 
 
 class TS1IOAddonPreferences(bpy.types.AddonPreferences):
@@ -106,6 +106,13 @@ class TS1IOAddonPreferences(bpy.types.AddonPreferences):
         default="",
     )
 
+    the_urbz_texture_directory: bpy.props.StringProperty(  # type: ignore[valid-type]
+        name="The Urbz Textures",
+        description="Directory for The Urbz textures",
+        subtype='DIR_PATH',
+        default="",
+    )
+
     the_sims_2_texture_directory: bpy.props.StringProperty(  # type: ignore[valid-type]
         name="The Sims 2 Textures",
         description="Directory for The Sims 2 textures",
@@ -117,6 +124,7 @@ class TS1IOAddonPreferences(bpy.types.AddonPreferences):
         """Draw the addon preferences ui."""
         self.layout.prop(self, "the_sims_texture_directory")
         self.layout.prop(self, "the_sims_bustin_out_texture_directory")
+        self.layout.prop(self, "the_urbz_texture_directory")
         self.layout.prop(self, "the_sims_2_texture_directory")
 
 

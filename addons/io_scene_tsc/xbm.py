@@ -1,4 +1,4 @@
-"""Read The Sims, The Sims Bustin' Out and The Sims 2 model files."""
+"""Read The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 model files."""
 
 import dataclasses
 import pathlib
@@ -15,6 +15,7 @@ class GameType(enum.Enum):
 
     THESIMS = 0
     THESIMSBUSTINOUT = 1
+    THEURBZ = 2
     THESIMS2 = 3
 
 
@@ -58,7 +59,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
     strip_count = struct.unpack('<I', file.read(4))[0]
     file.read(strip_count)
 
-    if game in (GameType.THESIMSBUSTINOUT, GameType.THESIMS2):
+    if game in (GameType.THESIMSBUSTINOUT, GameType.THEURBZ, GameType.THESIMS2):
         file.read(4)
 
     positions = []
@@ -127,7 +128,11 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
         positions += read_vertices(file, vertex_count)
 
         if flags & 0b00000010:
-            uvs += [struct.unpack('<2f', file.read(8)) for _ in range(vertex_count)]
+            if flags & 0b01000000 and game == GameType.THEURBZ:
+                uv_data = [struct.unpack('<4f', file.read(16)) for _ in range(vertex_count)]
+                uvs += [(x[0], x[1]) for x in uv_data]
+            else:
+                uvs += [struct.unpack('<2f', file.read(8)) for _ in range(vertex_count)]
 
         if flags & 0b00000100:
             file.read(vertex_count * 4)
@@ -148,7 +153,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
                     z = float(normal[2] / 127.0)
                     normals.append((x, y, z))
 
-        if flags & 0b01000000:
+        if flags & 0b01000000 and game != GameType.THEURBZ:
             file.read(vertex_count * 8)
 
         if flags & 0b00100000:
@@ -240,6 +245,51 @@ def read_the_sims_bustin_out_model(file: typing.BinaryIO, name: str) -> XboxObje
     )
 
 
+def read_the_urbz_model(file: typing.BinaryIO) -> XboxObject:
+    """Read The Urbz Model."""
+    file.read(16)
+
+    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+
+    file.read(57)
+
+    unknown_count_1 = struct.unpack('<I', file.read(4))[0]
+    if unknown_count_1 > 0:
+        while True:
+            if struct.unpack('<I', file.read(4))[0] != 0xFFFFFFFF:  # noqa: PLR2004
+                file.seek(file.tell() - 3)
+            else:
+                file.seek(file.tell() - 8)
+                break
+    else:
+        unknown_count_2 = struct.unpack('<I', file.read(4))[0]
+        for _ in range(unknown_count_2):
+            file.read(156)
+
+        unknown_count_3 = struct.unpack('<I', file.read(4))[0]
+        for _ in range(unknown_count_3):
+            file.read(172)
+
+        unknown_count_4 = struct.unpack('<I', file.read(4))[0]
+        for _ in range(unknown_count_4):
+            file.read(28)
+
+        file.read(5)
+
+    object_count = struct.unpack('<I', file.read(4))[0]
+
+    objects = [read_object(file, GameType.THEURBZ) for _ in range(object_count)]
+
+    file.read(64)
+    file.read(8)
+
+    return XboxModel(
+        name,
+        objects,
+        GameType.THEURBZ,
+    )
+
+
 def read_the_sims_2_model(file: typing.BinaryIO, name: str) -> XboxObject:
     """Read The Sims 2 Model."""
     file.read(2)
@@ -295,12 +345,13 @@ class XboxModel:
 def read_xbox_model(file: typing.BinaryIO) -> XboxModel:
     """Read Xbox Model."""
     version = struct.unpack('<I', file.read(4))[0]
+
+    if version == 0x35:  # noqa: PLR2004
+        return read_the_urbz_model(file)
+
     if version == 0x3A:  # noqa: PLR2004
         file.read(8)
         version = struct.unpack('<I', file.read(4))[0]
-
-    if version == 0x35:  # noqa: PLR2004
-        raise utils.FileReadError
 
     if version == 0x00:
         file.read(2)
