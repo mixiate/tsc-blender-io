@@ -123,6 +123,7 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                     texture_id_string = texture_loader.lookup_shader_texture_id_the_sims(texture_id_string)
                 case xbm.GameType.THESIMSBUSTINOUT:
                     texture_file_list = the_sims_bustin_out_texture_list
+                    texture_id_string = texture_loader.lookup_shader_texture_id_the_sims_bustin_out(texture_id_string)
                 case xbm.GameType.THEURBZ:
                     texture_file_list = the_urbz_texture_list
                     texture_id_string = texture_loader.lookup_shader_texture_id_the_urbz(texture_id_string)
