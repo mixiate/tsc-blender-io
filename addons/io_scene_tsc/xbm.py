@@ -5,6 +5,7 @@ import pathlib
 import struct
 import typing
 import enum
+import mathutils
 
 
 from . import utils
@@ -88,20 +89,17 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
                     file.read(vertex_count * 4)
 
                 if flags & 0b00001000:
-                    if game == GameType.THESIMS2:
-                        original_normals = [struct.unpack('<4b', file.read(4)) for _ in range(vertex_count)]
-                        for normal in original_normals:
-                            x = float(normal[0] / 127.0)
-                            y = float(normal[1] / 127.0)
-                            z = float(normal[2] / 127.0)
-                            normals.append((x, y, z))
-                    else:
-                        original_normals = [struct.unpack('<3b', file.read(3)) for _ in range(vertex_count)]
-                        for normal in original_normals:
-                            x = float(normal[0] / 127.0)
-                            y = float(normal[1] / 127.0)
-                            z = float(normal[2] / 127.0)
-                            normals.append((x, y, z))
+                    normal_format, normal_size = ('<4b', 4) if game == GameType.THESIMS2 else ('<3b', 3)
+                    normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
+                    for normal_data in normals_data:
+                        normal = mathutils.Vector(
+                            (
+                                (float(normal_data[0]) + 0.5) / 127.5,
+                                (float(normal_data[1]) + 0.5) / 127.5,
+                                (float(normal_data[2]) + 0.5) / 127.5,
+                            ),
+                        ).normalized()
+                        normals.append(normal)
 
                 file.read(vertex_count * 4)
 
@@ -138,20 +136,17 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
             file.read(vertex_count * 4)
 
         if flags & 0b00001000:
-            if game == GameType.THESIMS2:
-                original_normals = [struct.unpack('<4b', file.read(4)) for _ in range(vertex_count)]
-                for normal in original_normals:
-                    x = float(normal[0] / 127.0)
-                    y = float(normal[1] / 127.0)
-                    z = float(normal[2] / 127.0)
-                    normals.append((x, y, z))
-            else:
-                original_normals = [struct.unpack('<3b', file.read(3)) for _ in range(vertex_count)]
-                for normal in original_normals:
-                    x = float(normal[0] / 127.0)
-                    y = float(normal[1] / 127.0)
-                    z = float(normal[2] / 127.0)
-                    normals.append((x, y, z))
+            normal_format, normal_size = ('<4b', 4) if game == GameType.THESIMS2 else ('<3b', 3)
+            normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
+            for normal_data in normals_data:
+                normal = mathutils.Vector(
+                    (
+                        (float(normal_data[0]) + 0.5) / 127.5,
+                        (float(normal_data[1]) + 0.5) / 127.5,
+                        (float(normal_data[2]) + 0.5) / 127.5,
+                    ),
+                ).normalized()
+                normals.append(normal)
 
         if flags & 0b01000000 and game != GameType.THEURBZ:
             file.read(vertex_count * 8)
