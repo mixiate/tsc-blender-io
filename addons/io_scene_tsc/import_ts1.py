@@ -129,6 +129,7 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                     texture_id_string = texture_loader.lookup_shader_texture_id_the_urbz(texture_id_string)
                 case xbm.GameType.THESIMS2:
                     texture_file_list = the_sims_2_texture_list
+                    texture_id_string = texture_loader.lookup_shader_texture_id_the_sims_2(texture_id_string)
 
             for file_path in texture_file_list:
                 if file_path.stem.endswith(texture_id_string):
