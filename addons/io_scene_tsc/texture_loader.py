@@ -26,12 +26,26 @@ def create_material(obj: bpy.types.Object, texture_name: str, texture_file_path:
 
         principled_bsdf = material.node_tree.nodes.get('Principled BSDF')
         material.node_tree.links.new(image_node.outputs[0], principled_bsdf.inputs[0])
-        principled_bsdf.inputs[2].default_value = 1.0
+        principled_bsdf.inputs[2].default_value = 0.5
         principled_bsdf.inputs[12].default_value = 0.0
 
-        if texture_file_path.suffix.lower() == ".png":
+        if image.depth == 32:  # noqa: PLR2004
             material.node_tree.links.new(image_node.outputs[1], principled_bsdf.inputs[4])
             material.blend_method = 'HASHED'
+
+        specular_file_path = pathlib.Path(
+            texture_file_path.parent,
+            texture_file_path.stem + " specular" + texture_file_path.suffix,
+        )
+        if specular_file_path.is_file():
+            specular_image = bpy.data.images.get(specular_file_path.as_posix())
+            if specular_image is None:
+                specular_image = bpy.data.images.load(specular_file_path.as_posix())
+
+            specular_image_node = material.node_tree.nodes.new('ShaderNodeTexImage')
+            specular_image_node.image = specular_image
+
+            material.node_tree.links.new(specular_image_node.outputs[0], principled_bsdf.inputs[12])
 
     if material.name not in obj.data.materials:
         obj.data.materials.append(material)
