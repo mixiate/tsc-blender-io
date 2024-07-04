@@ -40,6 +40,34 @@ def create_material(obj: bpy.types.Object, texture_name: str, texture_file_path:
 def lookup_shader_texture_id_the_sims(texture_id_string: str) -> str:  # noqa: C901 PLR0911 PLR0912 PLR0915
     """Get the corresponding texture id string if texture_id_string refers to a shader."""
     match texture_id_string:
+        case "9211830f":
+            return "f0f62a15"
+        case "d0c82b7e":
+            return "e6b98a30"
+        case "3ce99816":
+            return "6d7eab00"
+        case "5b7a34f4":
+            return "3a5b477c"
+        case "6e0d4262":
+            return "1ad0206f"
+        case "a2a0ea04":
+            return "b154d360"
+        case "770e33e":
+            return "1559d4bc"
+        case "1aed28df":
+            return "dc7ef963"
+        case "23eee8":
+            return "4fcac910"
+        case "d0c82b7e":
+            return "e6b98a30"
+        case "2f0a9b2":
+            return "572722b2"
+        case "d0c82b7e":
+            return "e6b98a30"
+        case "4e2681e6":
+            return "f5f5f8e8"
+        case "4746f8e6":
+            return "419b5794"
         case "466ebc9":
             return "7dd84c1a"
         case "90d7b5fe":
