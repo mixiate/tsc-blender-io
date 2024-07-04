@@ -101,6 +101,12 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                     for loop in face.loops:
                         loop[uv_layer].uv = mesh_desc.uvs[loop.vert.index]
 
+            if len(mesh_desc.uvs_2):
+                uv_layer = b_mesh.loops.layers.uv.new()
+                for face in b_mesh.faces:
+                    for loop in face.loops:
+                        loop[uv_layer].uv = mesh_desc.uvs_2[loop.vert.index]
+
             b_mesh.to_mesh(mesh)
             b_mesh.free()
 

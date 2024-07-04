@@ -45,10 +45,18 @@ class Mesh:
 
     positions: list[Vertex]
     uvs: list[tuple[float, float]]
+    uvs_2: list[tuple[float, float]]
     normals: list[tuple[float, float, float]]
     faces: list[int]
     strips: list[tuple[int, int]]
     texture_id: int
+
+
+MESH_FLAGS_HAS_UVS = 0b00000010
+MESH_FLAGS_HAS_UVS_2 = 0b01000000
+MESH_FLAGS_HAS_UNKNOWN = 0b00000100
+MESH_FLAGS_HAS_NORMALS = 0b00001000
+MESH_FLAGS_HAS_INDICES = 0b00100000
 
 
 def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0912 PLR0915
@@ -65,6 +73,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
 
     positions = []
     uvs = []
+    uvs_2 = []
     normals = []
     faces = []
     strips = []
@@ -83,12 +92,14 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
                 vertex_count = struct.unpack('<I', file.read(4))[0]
 
                 positions += read_vertices(file, vertex_count)
-                uvs += [struct.unpack('<2f', file.read(8)) for _ in range(vertex_count)]
 
-                if flags & 0b00000100:
+                if flags & MESH_FLAGS_HAS_UVS:
+                    uvs += [struct.unpack('<2f', file.read(8)) for _ in range(vertex_count)]
+
+                if flags & MESH_FLAGS_HAS_UNKNOWN:
                     file.read(vertex_count * 4)
 
-                if flags & 0b00001000:
+                if flags & MESH_FLAGS_HAS_NORMALS:
                     normal_format, normal_size = ('<4b', 4) if game == GameType.THESIMS2 else ('<3b', 3)
                     normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
                     for normal_data in normals_data:
@@ -125,17 +136,18 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
 
         positions += read_vertices(file, vertex_count)
 
-        if flags & 0b00000010:
-            if flags & 0b01000000 and game in (GameType.THEURBZ, GameType.THESIMS2):
+        if flags & MESH_FLAGS_HAS_UVS:
+            if flags & MESH_FLAGS_HAS_UVS_2:
                 uv_data = [struct.unpack('<4f', file.read(16)) for _ in range(vertex_count)]
                 uvs += [(x[0], x[1]) for x in uv_data]
+                uvs_2 += [(x[2], x[3]) for x in uv_data]
             else:
                 uvs += [struct.unpack('<2f', file.read(8)) for _ in range(vertex_count)]
 
-        if flags & 0b00000100:
+        if flags & MESH_FLAGS_HAS_UNKNOWN:
             file.read(vertex_count * 4)
 
-        if flags & 0b00001000:
+        if flags & MESH_FLAGS_HAS_NORMALS:
             normal_format, normal_size = ('<4b', 4) if game == GameType.THESIMS2 else ('<3b', 3)
             normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
             for normal_data in normals_data:
@@ -148,10 +160,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
                 ).normalized()
                 normals.append(normal)
 
-        if flags & 0b01000000 and game not in (GameType.THEURBZ, GameType.THESIMS2):
-            file.read(vertex_count * 8)
-
-        if flags & 0b00100000:
+        if flags & MESH_FLAGS_HAS_INDICES:
             index_count = struct.unpack('<I', file.read(4))[0]
             file.read(1)
             faces = [struct.unpack('<H', file.read(2))[0] for _ in range(index_count)]
@@ -166,6 +175,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType) -> Mesh:  # noqa: C901 PLR0
     return Mesh(
         positions,
         uvs,
+        uvs_2,
         normals,
         faces,
         strips,
