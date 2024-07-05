@@ -4,7 +4,7 @@ bl_info = {
     "name": "The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 Xbox Model Formats",
     "description": "Import The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 Xbox models.",
     "author": "mix",
-    "version": (1, 0, 0),
+    "version": (1, 0, 1),
     "blender": (4, 1, 0),
     "location": "File > Import-Export",
     "warning": "",
