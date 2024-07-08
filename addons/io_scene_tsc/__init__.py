@@ -1,10 +1,10 @@
 """The Sims Console Blender IO."""
 
 bl_info = {
-    "name": "The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 Xbox Model Formats",
-    "description": "Import The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 Xbox models.",
+    "name": "The Sims, Bustin' Out, Urbz, 2, 2 Pets Model Formats",
+    "description": "Import The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 and The Sims 2 Pets models.",
     "author": "mix",
-    "version": (1, 0, 1),
+    "version": (1, 1, 0),
     "blender": (4, 1, 0),
     "location": "File > Import-Export",
     "warning": "",
@@ -30,11 +30,11 @@ import typing  # noqa: E402
 
 
 class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
-    """Import The Sims, The Sims Bustin' Out, The Urbz or The Sims 2 Xbox model."""
+    """Import model operator."""
 
     bl_idname: str = "import.model"
-    bl_label: str = "Import The Sims, The Sims Bustin' Out, The Urbz or The Sims 2 Xbox model"
-    bl_description: str = "Import The Sims, The Sims Bustin' Out, The Urbz or The Sims 2 Xbox model"
+    bl_label: str = "Import The Sims, Bustin' Out, Urbz, 2, Pets Model"
+    bl_description: str = "Import The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 or The Sims 2 Pets Model"
     bl_options: typing.ClassVar[set[str]] = {'UNDO'}
 
     filename_ext = ""
@@ -62,7 +62,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         import io
         import logging
         import pathlib
-        from . import import_ts1
+        from . import import_model
 
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)
@@ -72,7 +72,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         directory = pathlib.Path(self.directory)
         paths = [directory / file.name for file in self.files]
 
-        import_ts1.import_files(context, logger, paths, cleanup_meshes=self.cleanup_meshes)
+        import_model.import_files(context, logger, paths, cleanup_meshes=self.cleanup_meshes)
 
         log_output = log_stream.getvalue()
         if log_output != "":
@@ -88,7 +88,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
 def menu_import(self: bpy.types.TOPBAR_MT_file_import, _: bpy.context) -> None:
     """Add an entry to the import menu."""
-    self.layout.operator(TS1IOImport.bl_idname, text="The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 Xbox Model")
+    self.layout.operator(TS1IOImport.bl_idname)
 
 
 class TS1IOAddonPreferences(bpy.types.AddonPreferences):
@@ -124,12 +124,20 @@ class TS1IOAddonPreferences(bpy.types.AddonPreferences):
         default="",
     )
 
+    the_sims_2_pets_texture_directory: bpy.props.StringProperty(  # type: ignore[valid-type]
+        name="The Sims 2 Pets Textures",
+        description="Directory for The Sims 2 Pets textures",
+        subtype='DIR_PATH',
+        default="",
+    )
+
     def draw(self, _: bpy.context) -> None:
         """Draw the addon preferences ui."""
         self.layout.prop(self, "the_sims_texture_directory")
         self.layout.prop(self, "the_sims_bustin_out_texture_directory")
         self.layout.prop(self, "the_urbz_texture_directory")
         self.layout.prop(self, "the_sims_2_texture_directory")
+        self.layout.prop(self, "the_sims_2_pets_texture_directory")
 
 
 classes = (

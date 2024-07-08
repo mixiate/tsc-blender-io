@@ -8,12 +8,11 @@ import pathlib
 import contextlib
 
 
-from . import xbm
+from . import model
 from . import texture_loader
-from . import utils
 
 
-def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
+def import_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
     context: bpy.types.Context,
     logger: logging.Logger,
     file_path: pathlib.Path,
@@ -21,12 +20,13 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
     the_sims_bustin_out_texture_list: list[pathlib.Path],
     the_urbz_texture_list: list[pathlib.Path],
     the_sims_2_texture_list: list[pathlib.Path],
+    the_sims_2_pets_texture_list: list[pathlib.Path],
 ) -> list[bpy.types.Object]:
-    """Import an xbox model file."""
+    """Import a model file."""
     try:
-        model_desc = xbm.read_file(file_path)
-    except utils.FileReadError as _:
-        logger.info(f"Could not load xbox mesh {file_path}")  # noqa: G004
+        model_desc = model.read_file(file_path)
+    except model.FileReadError as _:
+        logger.info(f"Could not load model {file_path}")  # noqa: G004
         return []
 
     object_list = []
@@ -84,6 +84,9 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                 vertex_group = obj.vertex_groups.new(name=str(index))
 
                 for i in range(strip[0], strip[1] - 2):
+                    if mesh_desc.positions[i + 2].unknown & 0b1000_0000_0000_0000:
+                        continue
+
                     vert_a = b_mesh.verts[i + 0]
                     vert_b = b_mesh.verts[i + 1]
                     vert_c = b_mesh.verts[i + 2]
@@ -124,18 +127,20 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
             texture_id_string = f'{mesh_desc.texture_id:x}'
 
             match model_desc.game:
-                case xbm.GameType.THESIMS:
+                case model.GameType.THESIMS:
                     texture_file_list = the_sims_texture_list
                     texture_id_string = texture_loader.lookup_shader_texture_id_the_sims(texture_id_string)
-                case xbm.GameType.THESIMSBUSTINOUT:
+                case model.GameType.THESIMSBUSTINOUT:
                     texture_file_list = the_sims_bustin_out_texture_list
                     texture_id_string = texture_loader.lookup_shader_texture_id_the_sims_bustin_out(texture_id_string)
-                case xbm.GameType.THEURBZ:
+                case model.GameType.THEURBZ:
                     texture_file_list = the_urbz_texture_list
                     texture_id_string = texture_loader.lookup_shader_texture_id_the_urbz(texture_id_string)
-                case xbm.GameType.THESIMS2:
+                case model.GameType.THESIMS2:
                     texture_file_list = the_sims_2_texture_list
                     texture_id_string = texture_loader.lookup_shader_texture_id_the_sims_2(texture_id_string)
+                case model.GameType.THESIMS2PETS:
+                    texture_file_list = the_sims_2_pets_texture_list
 
             for file_path in texture_file_list:
                 if file_path.stem.endswith(texture_id_string):
@@ -144,7 +149,14 @@ def import_xbox_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
     return object_list
 
 
-def import_files(  # noqa: C901
+def get_texture_file_list(directory_string: str) -> list[pathlib.Path]:
+    """Get a list of all texture files from the given directory."""
+    if directory_string != "":
+        return list(pathlib.Path(directory_string).glob("*.png"))
+    return []
+
+
+def import_files(
     context: bpy.types.Context,
     logger: logging.Logger,
     file_paths: list[pathlib.Path],
@@ -158,38 +170,30 @@ def import_files(  # noqa: C901
     if bpy.ops.object.select_all.poll():
         bpy.ops.object.select_all(action='DESELECT')
 
-    the_sims_texture_directory = pathlib.Path(
+    the_sims_texture_list = get_texture_file_list(
         context.preferences.addons["io_scene_tsc"].preferences.the_sims_texture_directory,
     )
-    if the_sims_texture_directory == "":
-        the_sims_texture_directory = file_paths[0].parent
-    the_sims_texture_list = list(the_sims_texture_directory.glob("*.png"))
 
-    the_sims_bustin_out_texture_directory = pathlib.Path(
+    the_sims_bustin_out_texture_list = get_texture_file_list(
         context.preferences.addons["io_scene_tsc"].preferences.the_sims_bustin_out_texture_directory,
     )
-    if the_sims_bustin_out_texture_directory == "":
-        the_sims_bustin_out_texture_directory = file_paths[0].parent
-    the_sims_bustin_out_texture_list = list(the_sims_bustin_out_texture_directory.glob("*.png"))
 
-    the_urbz_texture_directory = pathlib.Path(
+    the_urbz_texture_list = get_texture_file_list(
         context.preferences.addons["io_scene_tsc"].preferences.the_urbz_texture_directory,
     )
-    if the_urbz_texture_directory == "":
-        the_urbz_texture_directory = file_paths[0].parent
-    the_urbz_texture_list = list(the_urbz_texture_directory.glob("*.png"))
 
-    the_sims_2_texture_directory = pathlib.Path(
+    the_sims_2_texture_list = get_texture_file_list(
         context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_texture_directory,
     )
-    if the_sims_2_texture_directory == "":
-        the_sims_2_texture_directory = file_paths[0].parent
-    the_sims_2_texture_list = list(the_sims_2_texture_directory.glob("*.png"))
+
+    the_sims_2_pets_texture_list = get_texture_file_list(
+        context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_pets_texture_directory,
+    )
 
     object_list = []
 
     for file_path in file_paths:
-        object_list += import_xbox_model(
+        object_list += import_model(
             context,
             logger,
             file_path,
@@ -197,6 +201,7 @@ def import_files(  # noqa: C901
             the_sims_bustin_out_texture_list,
             the_urbz_texture_list,
             the_sims_2_texture_list,
+            the_sims_2_pets_texture_list,
         )
 
     if cleanup_meshes:
