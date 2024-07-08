@@ -1,4 +1,4 @@
-"""Read The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 and The Sims 2 Pets model files."""
+"""Read The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets and The Sims 2 Castaway model files."""
 
 import dataclasses
 import enum
@@ -12,6 +12,9 @@ class FileReadError(Exception):
     """General purpose file read error."""
 
 
+FILE_MAGIC_ID = 1297040460
+
+
 class GameType(enum.Enum):
     """Model Game Type."""
 
@@ -20,6 +23,7 @@ class GameType(enum.Enum):
     THEURBZ = 2
     THESIMS2 = 3
     THESIMS2PETS = 4
+    THESIMS2CASTAWAY = 5
 
 
 class FloatType(enum.Enum):
@@ -143,6 +147,9 @@ def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: flo
     if game in (GameType.THESIMSBUSTINOUT, GameType.THEURBZ, GameType.THESIMS2, GameType.THESIMS2PETS):
         file.read(4)
 
+    if game == GameType.THESIMS2CASTAWAY:
+        file.read(52)
+
     float_type = FloatType.SNORM16 if flags & MESH_FLAGS_HAS_SNORM_FLOATS else FloatType.FLOAT32
 
     positions = []
@@ -176,7 +183,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: flo
                 if flags & MESH_FLAGS_HAS_NORMALS:
                     normal_format, normal_size = (
                         (endianness + '4b', 4)
-                        if game in (GameType.THESIMS2, GameType.THESIMS2PETS)
+                        if game in (GameType.THESIMS2, GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY)
                         else (endianness + '3b', 3)
                     )
                     normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
@@ -227,7 +234,9 @@ def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: flo
 
         if flags & MESH_FLAGS_HAS_NORMALS:
             normal_format, normal_size = (
-                (endianness + '4b', 4) if game in (GameType.THESIMS2, GameType.THESIMS2PETS) else (endianness + '3b', 3)
+                (endianness + '4b', 4)
+                if game in (GameType.THESIMS2, GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY)
+                else (endianness + '3b', 3)
             )
             normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
             for normal_data in normals_data:
@@ -241,9 +250,11 @@ def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: flo
                 normals.append(normal)
 
         if flags & MESH_FLAGS_HAS_INDICES:
-            if game == GameType.THESIMS2PETS:
+            if game in (GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY):
                 file.read(4)
                 file.read(1)
+
+                start_pos = file.tell()
 
                 indices_length = struct.unpack(endianness + 'I', file.read(4))[0]
 
@@ -256,11 +267,11 @@ def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: flo
 
                 faces = [struct.unpack(format_string, file.read(element_count * 2))[0] for _ in range(index_count)]
 
-                while True:
-                    marker = struct.unpack(endianness + 'B', file.read(1))[0]
-                    if marker != 0:
-                        file.seek(file.tell() - 1)
-                        break
+                file.seek(start_pos + indices_length + 8)
+
+                if game == GameType.THESIMS2CASTAWAY:
+                    file.read(index_count * 2)
+
             else:
                 index_count = struct.unpack(endianness + 'I', file.read(4))[0]
                 file.read(1)
@@ -295,6 +306,12 @@ def read_object(file: typing.BinaryIO, game: GameType, endianness: str, scale: f
     """Read Object."""
     file.read(4)
 
+    if game == GameType.THESIMS2CASTAWAY:
+        unknown_count = struct.unpack(endianness + 'I', file.read(4))[0]
+        for _ in range(unknown_count):
+            if len(file.read(7 * 4)) == 0:
+                raise FileReadError
+
     mesh_count = struct.unpack(endianness + 'I', file.read(4))[0]
 
     meshes = []
@@ -321,15 +338,18 @@ def read_header_unknowns(file: typing.BinaryIO, endianness: str) -> None:
     else:
         unknown_count_2 = struct.unpack(endianness + 'I', file.read(4))[0]
         for _ in range(unknown_count_2):
-            file.read(156)
+            if len(file.read(156)) == 0:
+                raise FileReadError
 
         unknown_count_3 = struct.unpack(endianness + 'I', file.read(4))[0]
         for _ in range(unknown_count_3):
-            file.read(172)
+            if len(file.read(172)) == 0:
+                raise FileReadError
 
         unknown_count_4 = struct.unpack(endianness + 'I', file.read(4))[0]
         for _ in range(unknown_count_4):
-            file.read(28)
+            if len(file.read(28)) == 0:
+                raise FileReadError
 
         file.read(1)
 
@@ -416,12 +436,15 @@ def read_the_urbz_model(file: typing.BinaryIO, endianness: str) -> Object:
 
 def read_the_sims_2_model(file: typing.BinaryIO, endianness: str) -> Object:
     """Read The Sims 2 Model."""
-    file.read(12)
+    if struct.unpack(endianness + 'I', file.read(4))[0] != FILE_MAGIC_ID:
+        raise FileReadError
 
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    if struct.unpack(endianness + 'i', file.read(4))[0] != -1:
+        raise FileReadError
 
-    file.read(4)
-    file.read(57)
+    name_length = struct.unpack(endianness + 'I', file.read(4))[0]
+    name = file.read(name_length - 1).decode('ascii')
+    file.read(1)
 
     read_header_unknowns(file, endianness)
 
@@ -443,9 +466,15 @@ def read_the_sims_2_model(file: typing.BinaryIO, endianness: str) -> Object:
 
 def read_the_sims_2_pets_model(file: typing.BinaryIO, endianness: str) -> Object:
     """Read The Sims 2 Pets Model."""
-    file.read(12)
+    if struct.unpack(endianness + 'I', file.read(4))[0] != FILE_MAGIC_ID:
+        raise FileReadError
 
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    if struct.unpack(endianness + 'i', file.read(4))[0] != -1:
+        raise FileReadError
+
+    name_length = struct.unpack(endianness + 'I', file.read(4))[0]
+    name = file.read(name_length - 1).decode('ascii')
+    file.read(1)
 
     file.read(4)
     file.read(57)
@@ -468,6 +497,39 @@ def read_the_sims_2_pets_model(file: typing.BinaryIO, endianness: str) -> Object
     )
 
 
+def read_the_sims_2_castaway_model(file: typing.BinaryIO, endianness: str) -> Object:
+    """Read The Sims 2 Castaway Model."""
+    if struct.unpack(endianness + 'I', file.read(4))[0] != FILE_MAGIC_ID:
+        raise FileReadError
+
+    if struct.unpack(endianness + 'i', file.read(4))[0] != -1:
+        raise FileReadError
+
+    name_length = struct.unpack(endianness + 'I', file.read(4))[0]
+    name = file.read(name_length - 1).decode('ascii')
+    file.read(1)
+
+    file.read(4)
+    file.read(57)
+
+    read_header_unknowns(file, endianness)
+
+    scale = 1.0 / struct.unpack(endianness + 'f', file.read(4))[0]
+
+    object_count = struct.unpack(endianness + 'I', file.read(4))[0]
+
+    objects = [read_object(file, GameType.THESIMS2CASTAWAY, endianness, scale) for _ in range(object_count)]
+
+    file.read(64)
+    file.read(8)
+
+    return Model(
+        name,
+        objects,
+        GameType.THESIMS2CASTAWAY,
+    )
+
+
 @dataclasses.dataclass
 class Model:
     """Model."""
@@ -477,7 +539,7 @@ class Model:
     game: GameType
 
 
-def read_model(file: typing.BinaryIO) -> Model:  # noqa: PLR0911
+def read_model(file: typing.BinaryIO) -> Model:  # noqa: C901 PLR0911
     """Read Model."""
     match struct.unpack('<I', file.read(4))[0]:
         case 0x00:
@@ -486,26 +548,20 @@ def read_model(file: typing.BinaryIO) -> Model:  # noqa: PLR0911
         case 0x01:
             return read_the_sims_bustin_out_model(file, '<')
 
-        case 0x01000000:
-            return read_the_sims_bustin_out_model(file, '>')
-
         case 0x35:
             return read_the_urbz_model(file, '<')
 
-        case 0x35000000:
-            return read_the_urbz_model(file, '>')
-
         case 0x3A:
             return read_the_sims_2_model(file, '<')
-
-        case 0x3A000000:
-            return read_the_sims_2_model(file, '>')
 
         case 0x3E:
             return read_the_sims_2_pets_model(file, '<')
 
         case 0x3E000000:
             return read_the_sims_2_pets_model(file, '>')
+
+        case 0x45000000:
+            return read_the_sims_2_castaway_model(file, '>')
 
     raise FileReadError
 

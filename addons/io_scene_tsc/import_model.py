@@ -1,4 +1,4 @@
-"""Import The Sims, The Sims Bustin' Out, The Urbz and The Sims 2 models in to Blender."""
+"""Import The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets and The Sims 2 Castaway models."""
 
 import bmesh
 import bpy
@@ -21,6 +21,7 @@ def import_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
     the_urbz_texture_list: list[pathlib.Path],
     the_sims_2_texture_list: list[pathlib.Path],
     the_sims_2_pets_texture_list: list[pathlib.Path],
+    the_sims_2_castaway_texture_list: list[pathlib.Path],
 ) -> list[bpy.types.Object]:
     """Import a model file."""
     try:
@@ -141,6 +142,8 @@ def import_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
                     texture_id_string = texture_loader.lookup_shader_texture_id_the_sims_2(texture_id_string)
                 case model.GameType.THESIMS2PETS:
                     texture_file_list = the_sims_2_pets_texture_list
+                case model.GameType.THESIMS2CASTAWAY:
+                    texture_file_list = the_sims_2_castaway_texture_list
 
             for file_path in texture_file_list:
                 if file_path.stem.endswith(texture_id_string):
@@ -190,6 +193,10 @@ def import_files(
         context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_pets_texture_directory,
     )
 
+    the_sims_2_castaway_texture_list = get_texture_file_list(
+        context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_castaway_texture_directory,
+    )
+
     object_list = []
 
     for file_path in file_paths:
@@ -202,6 +209,7 @@ def import_files(
             the_urbz_texture_list,
             the_sims_2_texture_list,
             the_sims_2_pets_texture_list,
+            the_sims_2_castaway_texture_list,
         )
 
     if cleanup_meshes:

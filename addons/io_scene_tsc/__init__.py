@@ -1,8 +1,8 @@
 """The Sims Console Blender IO."""
 
 bl_info = {
-    "name": "The Sims, Bustin' Out, Urbz, 2, 2 Pets Model Formats",
-    "description": "Import The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 and The Sims 2 Pets models.",
+    "name": "The Sims, Bustin' Out, Urbz, 2, Pets, Castaway model format",
+    "description": "Import models from the first generation of The Sims console games.",
     "author": "mix",
     "version": (1, 1, 0),
     "blender": (4, 1, 0),
@@ -33,8 +33,10 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Import model operator."""
 
     bl_idname: str = "import.model"
-    bl_label: str = "Import The Sims, Bustin' Out, Urbz, 2, Pets Model"
-    bl_description: str = "Import The Sims, The Sims Bustin' Out, The Urbz, The Sims 2 or The Sims 2 Pets Model"
+    bl_label: str = "Import The Sims, Bustin' Out, Urbz, 2, Pets, Castaway Model"
+    bl_description: str = (
+        "Import The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets or The Sims 2 Castaway Model"
+    )
     bl_options: typing.ClassVar[set[str]] = {'UNDO'}
 
     filename_ext = ""
@@ -131,6 +133,13 @@ class TS1IOAddonPreferences(bpy.types.AddonPreferences):
         default="",
     )
 
+    the_sims_2_castaway_texture_directory: bpy.props.StringProperty(  # type: ignore[valid-type]
+        name="The Sims 2 Castaway Textures",
+        description="Directory for The Sims 2 Castaway textures",
+        subtype='DIR_PATH',
+        default="",
+    )
+
     def draw(self, _: bpy.context) -> None:
         """Draw the addon preferences ui."""
         self.layout.prop(self, "the_sims_texture_directory")
@@ -138,6 +147,7 @@ class TS1IOAddonPreferences(bpy.types.AddonPreferences):
         self.layout.prop(self, "the_urbz_texture_directory")
         self.layout.prop(self, "the_sims_2_texture_directory")
         self.layout.prop(self, "the_sims_2_pets_texture_directory")
+        self.layout.prop(self, "the_sims_2_castaway_texture_directory")
 
 
 classes = (
