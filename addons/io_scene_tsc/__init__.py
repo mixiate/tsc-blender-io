@@ -53,6 +53,12 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         subtype='DIR_PATH',
     )
 
+    import_animations: bpy.props.BoolProperty(  # type: ignore[valid-type]
+        name="Import Skeletons and Animations",
+        description="Import skeletons and animations for models",
+        default=True,
+    )
+
     cleanup_meshes: bpy.props.BoolProperty(  # type: ignore[valid-type]
         name="Cleanup Meshes (Lossy)",
         description="Merge the vertices of the mesh, add sharp edges, remove original normals and shade smooth",
@@ -74,7 +80,13 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         directory = pathlib.Path(self.directory)
         paths = [directory / file.name for file in self.files]
 
-        import_model.import_files(context, logger, paths, cleanup_meshes=self.cleanup_meshes)
+        import_model.import_files(
+            context,
+            logger,
+            paths,
+            import_animations=self.import_animations,
+            cleanup_meshes=self.cleanup_meshes,
+        )
 
         log_output = log_stream.getvalue()
         if log_output != "":
@@ -85,6 +97,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def draw(self, _: bpy.context) -> None:
         """Draw the import options ui."""
         col = self.layout.column()
+        col.prop(self, "import_animations")
         col.prop(self, "cleanup_meshes")
 
 
