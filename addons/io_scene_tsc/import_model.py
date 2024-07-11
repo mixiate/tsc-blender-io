@@ -60,18 +60,18 @@ THE_SIMS_BUSTIN_OUT_CHARACTER_FILE_NAME_LOOKUP = {
 
 
 THE_URBZ_CHARACTER_FILE_NAME_LOOKUP = {
-    "Loading_Dut 0xfd7f6441": "load_urbz_cas 24c58257",
-    "Loading_English 0x89a7ea61": "load_urbz_cas 24c58257",
-    "Loading_Finn 0x4d58e53c": "load_urbz_cas 24c58257",
-    "Loading_Fra 0xdc67c203": "load_urbz_cas 24c58257",
-    "Loading_Ger 0x5c986d7c": "load_urbz_cas 24c58257",
-    "Loading_Ita 0x816122b8": "load_urbz_cas 24c58257",
-    "Loading_Japanese 0xbe91480": "load_urbz_cas 24c58257",
-    "Loading_Kor 0xaf6d7c92": "load_urbz_cas 24c58257",
-    "Loading_Norw 0xe7d44fc": "load_urbz_cas 24c58257",
-    "Loading_Pol 0x45110d60": "load_urbz_cas 24c58257",
-    "Loading_Spa 0xf4bcc11a": "load_urbz_cas 24c58257",
-    "Loading_tChinese 0x2ab2ed87": "load_urbz_cas 24c58257",
+    "loading_dut fd7f6441": "load_urbz_cas 24c58257",
+    "loading_english 89a7ea61": "load_urbz_cas 24c58257",
+    "loading_finn 4d58e53c": "load_urbz_cas 24c58257",
+    "loading_fra dc67c203": "load_urbz_cas 24c58257",
+    "loading_ger 5c986d7c": "load_urbz_cas 24c58257",
+    "loading_ita 816122b8": "load_urbz_cas 24c58257",
+    "loading_japanese be91480": "load_urbz_cas 24c58257",
+    "loading_kor af6d7c92": "load_urbz_cas 24c58257",
+    "loading_norw e7d44fc": "load_urbz_cas 24c58257",
+    "loading_pol 45110d60": "load_urbz_cas 24c58257",
+    "loading_spa f4bcc11a": "load_urbz_cas 24c58257",
+    "loading_tchinese 2ab2ed87": "load_urbz_cas 24c58257",
 }
 
 
