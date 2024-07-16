@@ -16,7 +16,10 @@ class Bone:
 
     name: str
     children: list[int]
+    translation: mathutils.Vector
+    rotation: mathutils.Quaternion
     matrix: mathutils.Matrix
+    matrix_inverse: mathutils.Matrix
 
 
 def read_bone(file: typing.BinaryIO, endianness: str) -> Bone:
@@ -27,9 +30,11 @@ def read_bone(file: typing.BinaryIO, endianness: str) -> Bone:
 
     children = [struct.unpack(endianness + 'I', file.read(4))[0] for _ in range(children_count)]
 
-    file.read(29)
+    translation = mathutils.Vector(struct.unpack(endianness + '3f', file.read(12)))
 
-    file.read(64)
+    rotation = mathutils.Quaternion(mathutils.Vector(struct.unpack(endianness + '4f', file.read(16))).wxyz)
+
+    file.read(1)
 
     matrix = mathutils.Matrix(
         (
@@ -40,9 +45,18 @@ def read_bone(file: typing.BinaryIO, endianness: str) -> Bone:
         ),
     )
 
+    matrix_inverse = mathutils.Matrix(
+        (
+            struct.unpack(endianness + '4f', file.read(16)),
+            struct.unpack(endianness + '4f', file.read(16)),
+            struct.unpack(endianness + '4f', file.read(16)),
+            struct.unpack(endianness + '4f', file.read(16)),
+        ),
+    )
+
     name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
 
-    return Bone(name, children, matrix)
+    return Bone(name, children, translation, rotation, matrix, matrix_inverse)
 
 
 @dataclasses.dataclass

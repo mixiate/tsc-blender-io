@@ -3,7 +3,9 @@
 import bmesh
 import bpy
 import contextlib
+import copy
 import logging
+import math
 import mathutils
 import pathlib
 import struct
@@ -152,7 +154,7 @@ def read_animation_ids_from_model_id(  # noqa: C901 PLR0912
     """Read animation ids from a quickdat file."""
     # bustin' out map
     if game_type == utils.GameType.THESIMSBUSTINOUT and model_id == 0x50AE831:  # noqa: PLR2004
-        return [0x30AA9779, 0x92D8AE4A, 0x6BCF6EE9]
+        return [0x92D8AE4A, 0x30AA9779, 0x6BCF6EE9]
 
     # urbz map
     if game_type == utils.GameType.THEURBZ and model_id == 0x95B8888F:  # noqa: PLR2004
@@ -208,7 +210,7 @@ def read_animation_ids_from_model_id(  # noqa: C901 PLR0912
             animation_ids = [read_animation_id(file, game_type, endianness) for _ in range(count)]
             animation_ids = [x for x in animation_ids if x is not None]
 
-            return set(animation_ids)
+            return list(dict.fromkeys(animation_ids))
 
     except (OSError, struct.error) as _:
         return []
@@ -270,14 +272,29 @@ def import_character(  # noqa: PLR0913
 
     for bone in char_desc.bones:
         armature_bone = armature.edit_bones.new(name=bone.name)
-        armature_bone.head = mathutils.Vector((0.0, 0.0, 0.0))
-        armature_bone.tail = mathutils.Vector((0.0, 0.1, 0.0))
 
-        armature_bone.matrix = bone.matrix
+        armature_bone.length = 0.075
+        armature_bone.matrix = (
+            mathutils.Matrix.LocRotScale(bone.translation, bone.rotation, None) @ utils.BONE_ROTATION_OFFSET
+        )
 
     for bone_index, bone in enumerate(char_desc.bones):
         for child_index in bone.children:
             armature.edit_bones[child_index].parent = armature.edit_bones[bone_index]
+
+    for bone in armature.edit_bones:
+        if bone.parent and bone.head != bone.parent.head:
+            previous_parent_tail = copy.copy(bone.parent.tail)
+            previous_parent_quat = bone.parent.matrix.to_4x4().to_quaternion()
+            bone.parent.tail = bone.head
+            quaternion_difference = bone.parent.matrix.to_4x4().to_quaternion().dot(previous_parent_quat)
+            if not math.isclose(quaternion_difference, 1.0, rel_tol=1e-05):
+                bone.parent.tail = previous_parent_tail
+            else:
+                bone.use_connect = True
+
+            if len(bone.children) == 0:
+                bone.length = bone.parent.length
 
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
@@ -285,7 +302,8 @@ def import_character(  # noqa: PLR0913
     return armature_object
 
 
-def import_animation(
+def import_animation(  # noqa: PLR0913
+    context: bpy.types.Context,
     logger: logging.Logger,
     file_path: pathlib.Path,
     game_type: utils.GameType,
@@ -306,20 +324,45 @@ def import_animation(
         armature_object.animation_data.action = action
         return
 
-    armature_object.animation_data.action = bpy.data.actions.new(name=anim_desc.name)
+    action = bpy.data.actions.new(name=anim_desc.name)
+    armature_object.animation_data.action = action
 
-    for pose_bone, bone in zip(armature_object.pose.bones, anim_desc.bones):
-        pose_bone.rotation_quaternion = bone.rotation
-        pose_bone.scale = bone.scale
-        pose_bone.location = bone.location
+    action.frame_range = (1.0, anim_desc.frame_count)
 
-        pose_bone.keyframe_insert(data_path="rotation_quaternion", frame=1)
-        pose_bone.keyframe_insert(data_path="scale", frame=1)
-        pose_bone.keyframe_insert(data_path="location", frame=1)
+    for pose_bone, keyframes in zip(armature_object.pose.bones, anim_desc.bones):
+        for keyframe in keyframes.rotation_keyframes:
+            rotation = keyframe.rotation
+
+            bone_rotation = pose_bone.bone.matrix_local.to_quaternion()
+
+            pose_bone.rotation_quaternion = ((bone_rotation.inverted() @ rotation) @ bone_rotation).normalized()
+
+            pose_bone.keyframe_insert(data_path="rotation_quaternion", frame=keyframe.frame + 1)
+
+        for keyframe in keyframes.scale_keyframes:
+            scale = keyframe.vector
+
+            scale = mathutils.Matrix.LocRotScale(None, None, scale)
+
+            pose_bone.scale = (scale @ utils.BONE_ROTATION_OFFSET).to_scale()
+
+            pose_bone.keyframe_insert(data_path="scale", frame=keyframe.frame + 1)
+
+        for keyframe in keyframes.location_keyframes:
+            location = keyframe.vector
+
+            bone_rotation = pose_bone.bone.matrix_local.to_quaternion().to_matrix()
+
+            pose_bone.location = bone_rotation.inverted() @ location
+
+            pose_bone.keyframe_insert(data_path="location", frame=keyframe.frame + 1)
 
     track = armature_object.animation_data.nla_tracks.new(prev=None)
     track.name = anim_desc.name
-    track.strips.new(anim_desc.name, 1, armature_object.animation_data.action)
+    track.strips.new(anim_desc.name, 1, action)
+
+    context.scene.render.fps = 60
+    context.scene.frame_end = max(context.scene.frame_end, anim_desc.frame_count)
 
 
 def import_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
@@ -493,8 +536,9 @@ def import_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
         for animation_file_path in animation_file_list:
             for animation_id in animation_ids:
                 animation_id_string = f"{animation_id:x}"
-                if animation_file_path.stem.endswith(animation_id_string):
+                if animation_file_path.stem.endswith(animation_id_string) and animation_file_path.suffix != ".json":
                     import_animation(
+                        context,
                         logger,
                         animation_file_path,
                         model_desc.game,
@@ -504,10 +548,6 @@ def import_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
 
         if armature_object.animation_data is not None and armature_object.animation_data.nla_tracks is not None:
             armature_object.animation_data.action = armature_object.animation_data.nla_tracks[0].strips[0].action
-
-            # set bustin' out vehicles to default pose
-            if "static_model" in armature_object.name:
-                armature_object.animation_data.action = armature_object.animation_data.nla_tracks[-1].strips[0].action
 
     return object_list
 
