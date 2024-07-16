@@ -145,7 +145,7 @@ def read_animation_id(file: typing.BinaryIO, game_type: utils.GameType, endianne
     return None
 
 
-def read_animation_ids_from_model_id(  # noqa: C901 PLR0912
+def read_animation_ids_from_model_id(
     quickdat_file_path: pathlib.Path,
     game_type: utils.GameType,
     endianness: str,
@@ -153,11 +153,11 @@ def read_animation_ids_from_model_id(  # noqa: C901 PLR0912
 ) -> list[int]:
     """Read animation ids from a quickdat file."""
     # bustin' out map
-    if game_type == utils.GameType.THESIMSBUSTINOUT and model_id == 0x50AE831:  # noqa: PLR2004
+    if game_type == utils.GameType.THESIMSBUSTINOUT and model_id == 0x50AE831:
         return [0x92D8AE4A, 0x30AA9779, 0x6BCF6EE9]
 
     # urbz map
-    if game_type == utils.GameType.THEURBZ and model_id == 0x95B8888F:  # noqa: PLR2004
+    if game_type == utils.GameType.THEURBZ and model_id == 0x95B8888F:
         return [0x95B8888F]
 
     # urbz load
@@ -243,7 +243,7 @@ def get_animation_model_id_from_model_id(model_id: int, game_type: utils.GameTyp
     return animation_model_id
 
 
-def import_character(  # noqa: PLR0913
+def import_character(
     context: bpy.types.Context,
     logger: logging.Logger,
     file_path: pathlib.Path,
@@ -302,7 +302,7 @@ def import_character(  # noqa: PLR0913
     return armature_object
 
 
-def import_animation(  # noqa: PLR0913
+def import_animation(
     context: bpy.types.Context,
     logger: logging.Logger,
     file_path: pathlib.Path,
@@ -365,7 +365,7 @@ def import_animation(  # noqa: PLR0913
     context.scene.frame_end = max(context.scene.frame_end, anim_desc.frame_count)
 
 
-def import_model(  # noqa: C901 PLR0912 PLR0913 PLR0915
+def import_model(
     context: bpy.types.Context,
     logger: logging.Logger,
     file_path: pathlib.Path,

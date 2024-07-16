@@ -32,7 +32,7 @@ def create_material(obj: bpy.types.Object, texture_name: str, texture_file_path:
         principled_bsdf.inputs[2].default_value = 0.5
         principled_bsdf.inputs[12].default_value = 0.0
 
-        if image.depth == 32:  # noqa: PLR2004
+        if image.depth == 32:
             material.node_tree.links.new(image_node.outputs[1], principled_bsdf.inputs[4])
             material.blend_method = 'HASHED'
 

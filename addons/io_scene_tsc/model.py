@@ -125,7 +125,7 @@ MESH_FLAGS_HAS_INDICES = 0b0010_0000
 MESH_FLAGS_HAS_UVS_2 = 0b0100_0000
 
 
-def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scale: float) -> Mesh:  # noqa: C901 PLR0912 PLR0915
+def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scale: float) -> Mesh:
     """Read mesh."""
     flags = struct.unpack(endianness + 'I', file.read(4))[0]
 
@@ -161,10 +161,10 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
     for _ in range(strip_count):
         mesh_type = struct.unpack(endianness + 'B', file.read(1))[0]
 
-        if mesh_type == 4:  # noqa: PLR2004
+        if mesh_type == 4:
             for _ in range(strip_count):
                 marker = struct.unpack(endianness + 'B', file.read(1))[0]
-                if marker == 5:  # noqa: PLR2004
+                if marker == 5:
                     file.read(2)
 
                 vertex_count = struct.unpack(endianness + 'I', file.read(4))[0]
@@ -208,7 +208,7 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
 
             break
 
-        if mesh_type == 2:  # noqa: PLR2004
+        if mesh_type == 2:
             file.read(1)
 
         read_bone_weights = False
@@ -334,7 +334,7 @@ def read_object(file: typing.BinaryIO, game: utils.GameType, endianness: str, sc
         meshes.append(read_mesh(file, game, endianness, scale))
 
         marker = struct.unpack(endianness + 'B', file.read(1))[0]
-        if marker != 6:  # noqa: PLR2004
+        if marker != 6:
             file.read(1)
 
     return Object(meshes)
@@ -345,7 +345,7 @@ def read_header_unknowns(file: typing.BinaryIO, endianness: str) -> None:
     unknown_count_1 = struct.unpack(endianness + 'I', file.read(4))[0]
     if unknown_count_1 > 0:
         while True:
-            if struct.unpack(endianness + 'I', file.read(4))[0] != 0xFFFFFFFF:  # noqa: PLR2004
+            if struct.unpack(endianness + 'I', file.read(4))[0] != 0xFFFFFFFF:
                 file.seek(file.tell() - 3)
             else:
                 file.seek(file.tell() - 12)

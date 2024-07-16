@@ -46,7 +46,7 @@ def decompress_quaternion_keyframes(
 
     quaternion_scale = 1.0 / float((1 << ((quaternion_bit_count - 1) & 0x1F)) + -1)
 
-    frame_count_multiplier = 1 if fps == 60.0 else 2  # noqa: PLR2004
+    frame_count_multiplier = 1 if fps == 60.0 else 2
 
     frame_count = 0
     keyframes = []
@@ -135,7 +135,7 @@ def decompress_vector_keyframes(stream_data: bit_array.BitArray, index: int, fps
         offset_float = ctypes.c_float.from_buffer(ctypes.c_uint32(offset_bits)).value
         offset[i] = offset_float
 
-    frame_count_multiplier = 1 if fps == 60.0 else 2  # noqa: PLR2004
+    frame_count_multiplier = 1 if fps == 60.0 else 2
 
     frame_count = 0
     keyframes = []
@@ -175,7 +175,7 @@ class Bone:
     location_keyframes: list[int]
 
 
-def read_bone(  # noqa: PLR0913
+def read_bone(
     file: typing.BinaryIO,
     endianness: str,
     game_type: utils.GameType,
@@ -267,7 +267,7 @@ class Animation:
     end_action: int
 
 
-def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.GameType) -> Animation:  # noqa: C901 PLR0915
+def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.GameType) -> Animation:
     """Read animation."""
     match game_type:
         case utils.GameType.THEURBZ:
@@ -337,10 +337,10 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
             file.read(8)
             _ = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
 
-    if len(file.read(4)) != 4:  # noqa: PLR2004
+    if len(file.read(4)) != 4:
         raise utils.FileReadError
 
-    frame_count = frame_count if fps == 60.0 else frame_count * 2  # noqa: PLR2004
+    frame_count = frame_count if fps == 60.0 else frame_count * 2
 
     return Animation(
         name,
