@@ -15,6 +15,7 @@ import typing
 from . import animation
 from . import character
 from . import checksum
+from . import id_file_path_map
 from . import model
 from . import texture_loader
 from . import utils
@@ -373,14 +374,7 @@ def import_model(
     context: bpy.types.Context,
     logger: logging.Logger,
     file_path: pathlib.Path,
-    the_sims_texture_list: dict[int, pathlib.Path],
-    the_sims_bustin_out_texture_list: dict[int, pathlib.Path],
-    the_urbz_texture_list: dict[int, pathlib.Path],
-    the_sims_2_texture_list: dict[int, pathlib.Path],
-    the_sims_2_pets_texture_list: dict[int, pathlib.Path],
-    the_sims_2_castaway_texture_list: dict[int, pathlib.Path],
-    character_id_file_path_map: dict[int, pathlib.Path],
-    animation_id_file_path_map: dict[int, pathlib.Path],
+    id_file_path_maps: id_file_path_map.IDFilePathMaps,
     *,
     import_animations: bool,
 ) -> list[bpy.types.Object]:
@@ -404,7 +398,7 @@ def import_model(
         armature_object = import_character(
             context,
             logger,
-            character_id_file_path_map,
+            id_file_path_maps.characters.get(),
             model_desc.name,
             model_id,
             model_desc.game,
@@ -512,21 +506,21 @@ def import_model(
 
             match model_desc.game:
                 case utils.GameType.THESIMS:
-                    texture_file_list = the_sims_texture_list
+                    texture_id_file_path_map = id_file_path_maps.the_sims.get()
                 case utils.GameType.THESIMSBUSTINOUT:
-                    texture_file_list = the_sims_bustin_out_texture_list
+                    texture_id_file_path_map = id_file_path_maps.the_sims_bustin_out.get()
                 case utils.GameType.THEURBZ:
-                    texture_file_list = the_urbz_texture_list
+                    texture_id_file_path_map = id_file_path_maps.the_urbz.get()
                 case utils.GameType.THESIMS2:
-                    texture_file_list = the_sims_2_texture_list
+                    texture_id_file_path_map = id_file_path_maps.the_sims_2.get()
                 case utils.GameType.THESIMS2PETS:
-                    texture_file_list = the_sims_2_pets_texture_list
+                    texture_id_file_path_map = id_file_path_maps.the_sims_2_pets.get()
                 case utils.GameType.THESIMS2CASTAWAY:
-                    texture_file_list = the_sims_2_castaway_texture_list
+                    texture_id_file_path_map = id_file_path_maps.the_sims_2_castaway.get()
 
             texture_id = texture_loader.lookup_shader_id_texture_id(mesh_desc.texture_id, model_desc.game)
 
-            texture_file_path = texture_file_list.get(texture_id, None)
+            texture_file_path = texture_id_file_path_map.get(texture_id, None)
 
             if texture_file_path:
                 texture_loader.create_material(obj, texture_file_path.stem, texture_file_path)
@@ -542,7 +536,7 @@ def import_model(
         )
 
         for animation_id in animation_ids:
-            animation_file_path = animation_id_file_path_map.get(animation_id)
+            animation_file_path = id_file_path_maps.animations.get().get(animation_id)
             if animation_file_path:
                 import_animation(
                     context,
@@ -557,16 +551,6 @@ def import_model(
             armature_object.animation_data.action = armature_object.animation_data.nla_tracks[0].strips[0].action
 
     return object_list
-
-
-def create_id_file_path_map(directory: pathlib.Path) -> dict[int, pathlib.Path]:
-    """Create a map between checksum IDs and file paths."""
-    if directory.is_dir():
-        file_dict = {}
-        for file_path in directory.glob("*"):
-            file_dict[checksum.calculate(file_path.stem)] = file_path
-        return file_dict
-    return {}
 
 
 def import_files(
@@ -584,32 +568,16 @@ def import_files(
     if bpy.ops.object.select_all.poll():
         bpy.ops.object.select_all(action='DESELECT')
 
-    the_sims_texture_list = create_id_file_path_map(
+    id_file_path_maps = id_file_path_map.IDFilePathMaps(
         pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_texture_directory),
-    )
-
-    the_sims_bustin_out_texture_list = create_id_file_path_map(
         pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_bustin_out_texture_directory),
-    )
-
-    the_urbz_texture_list = create_id_file_path_map(
         pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_urbz_texture_directory),
-    )
-
-    the_sims_2_texture_list = create_id_file_path_map(
         pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_texture_directory),
-    )
-
-    the_sims_2_pets_texture_list = create_id_file_path_map(
         pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_pets_texture_directory),
-    )
-
-    the_sims_2_castaway_texture_list = create_id_file_path_map(
         pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_castaway_texture_directory),
+        file_paths[0].parent / "characters",
+        file_paths[0].parent / "animations",
     )
-
-    character_id_file_path_map = create_id_file_path_map(file_paths[0].parent / "characters")
-    animation_id_file_path_map = create_id_file_path_map(file_paths[0].parent / "animations")
 
     object_list = []
 
@@ -618,14 +586,7 @@ def import_files(
             context,
             logger,
             file_path,
-            the_sims_texture_list,
-            the_sims_bustin_out_texture_list,
-            the_urbz_texture_list,
-            the_sims_2_texture_list,
-            the_sims_2_pets_texture_list,
-            the_sims_2_castaway_texture_list,
-            character_id_file_path_map,
-            animation_id_file_path_map,
+            id_file_path_maps,
             import_animations=import_animations,
         )
 
