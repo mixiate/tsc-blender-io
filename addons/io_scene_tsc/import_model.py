@@ -104,6 +104,11 @@ def import_animation(
     action = bpy.data.actions.get(anim_desc.name)
     if action is not None:
         armature_object.animation_data.action = action
+
+        track = armature_object.animation_data.nla_tracks.new(prev=None)
+        track.name = anim_desc.name
+        track.strips.new(anim_desc.name, 1, action)
+
         return
 
     action = bpy.data.actions.new(name=anim_desc.name)
