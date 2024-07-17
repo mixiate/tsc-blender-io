@@ -56,9 +56,8 @@ def import_character(
         armature_bone = armature.edit_bones.new(name=bone.name)
 
         armature_bone.length = 0.075
-        armature_bone.matrix = (
-            mathutils.Matrix.LocRotScale(bone.translation, bone.rotation, None) @ utils.BONE_ROTATION_OFFSET
-        )
+        armature_bone.matrix = mathutils.Matrix.LocRotScale(bone.translation, bone.rotation, None)
+        armature_bone.matrix @= utils.BONE_ROTATION_OFFSET
 
     for bone_index, bone in enumerate(char_desc.bones):
         for child_index in bone.children:
@@ -82,6 +81,14 @@ def import_character(
     bpy.ops.object.select_all(action='DESELECT')
 
     return armature_object
+
+
+def create_fcurve_data(action: bpy.types.Action, data_path: str, index: int, data: list[float]) -> None:
+    """Create the fcurve data for all frames at once."""
+    f_curve = action.fcurves.new(data_path, index=index)
+    f_curve.keyframe_points.add(count=int(len(data) / 2))
+    f_curve.keyframe_points.foreach_set("co", data)
+    f_curve.update()
 
 
 def import_animation(
@@ -117,32 +124,64 @@ def import_animation(
     action.frame_range = (1.0, anim_desc.frame_count)
 
     for pose_bone, keyframes in zip(armature_object.pose.bones, anim_desc.bones):
+        bone_rotation = pose_bone.bone.matrix_local.to_quaternion()
+
+        rotation_keyframes_w = []
+        rotation_keyframes_x = []
+        rotation_keyframes_y = []
+        rotation_keyframes_z = []
         for keyframe in keyframes.rotation_keyframes:
-            rotation = keyframe.rotation
+            frame = float(keyframe.frame + 1)
 
-            bone_rotation = pose_bone.bone.matrix_local.to_quaternion()
+            rotation = ((bone_rotation.inverted() @ keyframe.rotation) @ bone_rotation).normalized()
 
-            pose_bone.rotation_quaternion = ((bone_rotation.inverted() @ rotation) @ bone_rotation).normalized()
+            rotation_keyframes_w += (frame, rotation.w)
+            rotation_keyframes_x += (frame, rotation.x)
+            rotation_keyframes_y += (frame, rotation.y)
+            rotation_keyframes_z += (frame, rotation.z)
 
-            pose_bone.keyframe_insert(data_path="rotation_quaternion", frame=keyframe.frame + 1)
+        if rotation_keyframes_w:
+            data_path = pose_bone.path_from_id("rotation_quaternion")
+            create_fcurve_data(action, data_path, 0, rotation_keyframes_w)
+            create_fcurve_data(action, data_path, 1, rotation_keyframes_x)
+            create_fcurve_data(action, data_path, 2, rotation_keyframes_y)
+            create_fcurve_data(action, data_path, 3, rotation_keyframes_z)
 
+        scale_keyframes_x = []
+        scale_keyframes_y = []
+        scale_keyframes_z = []
         for keyframe in keyframes.scale_keyframes:
-            scale = keyframe.vector
+            frame = float(keyframe.frame + 1)
 
-            scale = mathutils.Matrix.LocRotScale(None, None, scale)
+            scale = (mathutils.Matrix.LocRotScale(None, None, keyframe.vector) @ utils.BONE_ROTATION_OFFSET).to_scale()
 
-            pose_bone.scale = (scale @ utils.BONE_ROTATION_OFFSET).to_scale()
+            scale_keyframes_x += (frame, scale.x)
+            scale_keyframes_y += (frame, scale.y)
+            scale_keyframes_z += (frame, scale.z)
 
-            pose_bone.keyframe_insert(data_path="scale", frame=keyframe.frame + 1)
+        if scale_keyframes_x:
+            data_path = pose_bone.path_from_id("scale")
+            create_fcurve_data(action, data_path, 0, scale_keyframes_x)
+            create_fcurve_data(action, data_path, 1, scale_keyframes_y)
+            create_fcurve_data(action, data_path, 2, scale_keyframes_z)
 
+        location_keyframes_x = []
+        location_keyframes_y = []
+        location_keyframes_z = []
         for keyframe in keyframes.location_keyframes:
-            location = keyframe.vector
+            frame = float(keyframe.frame + 1)
 
-            bone_rotation = pose_bone.bone.matrix_local.to_quaternion().to_matrix()
+            location = bone_rotation.inverted() @ keyframe.vector
 
-            pose_bone.location = bone_rotation.inverted() @ location
+            location_keyframes_x += (frame, location.x)
+            location_keyframes_y += (frame, location.y)
+            location_keyframes_z += (frame, location.z)
 
-            pose_bone.keyframe_insert(data_path="location", frame=keyframe.frame + 1)
+        if location_keyframes_x:
+            data_path = pose_bone.path_from_id("location")
+            create_fcurve_data(action, data_path, 0, location_keyframes_x)
+            create_fcurve_data(action, data_path, 1, location_keyframes_y)
+            create_fcurve_data(action, data_path, 2, location_keyframes_z)
 
     track = armature_object.animation_data.nla_tracks.new(prev=None)
     track.name = anim_desc.name
