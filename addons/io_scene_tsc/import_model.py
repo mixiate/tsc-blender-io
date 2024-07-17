@@ -14,119 +14,119 @@ import typing
 
 from . import animation
 from . import character
+from . import checksum
 from . import model
 from . import texture_loader
 from . import utils
 
 
-THE_SIMS_CHARACTER_FILE_NAME_LOOKUP = {
-    "blue_plate_sconce_a_00 8414147c": "blue_plate_sconce 64e0e172",
-    "bottle_lamp_a_00 5bc8dea": "bottle_lamp 9c9b1caf",
-    "carry_pizzabox_a_00 5e13146f": "carry_pizzabox 8de4b3fd",
-    "elite_reflections_chrome_lamp_a_00 ce23a4ef": "elite_reflections_chrome_lamp 91e7088e",
-    "fight_3d_part 87afd27c": "fighting_strip e63138fa",
-    "halogen_heaven_lamp_by_contempto_a_00 f96953d1": "halogen_heaven_lamp_by_contempto 9cc7775e",
-    "hydrothera_bathtub_a_00 1274b029": "hydrothera_bathtub 3a5ee732",
-    "master_suite_tub_a_00 9aee727": "master_suite_tub cd98a854",
-    "oval_glass_sconce_a_00 ca88340b": "oval_glass_sconce a2b792a8",
-    "sani_queen_bathtub_a_00 1dcc5c48": "sani_queen_bathtub 85afab17",
-    "top_brass_sconce_a_00 9cd3e29": "top_brass_sconce 5e9076eb",
-    "torchosterone_floor_lamp_a_00 24f1e2a2": "torchosterone_floor_lamp 3e88d019",
-    "torchosterone_table_lamp_a_00 c890dfe1": "torchosterone_table_lamp 58a25bf4",
-    "vanity_mirror_a_00 abce6013": "vanity_mirror 419b5794",
+THE_SIMS_MODEL_ID_CHARACTER_ID_MAP = {
+    0x8414147C: 0x64E0E172,  # blue_plate_sconce_a_00
+    0x5BC8DEA: 0x9C9B1CAF,  # bottle_lamp_a_00
+    0x5E13146F: 0x8DE4B3FD,  # carry_pizzabox_a_00
+    0xCE23A4EF: 0x91E7088E,  # elite_reflections_chrome_lamp_a_00
+    0x87AFD27C: 0xE63138FA,  # fight_3d_part
+    0xF96953D1: 0x9CC7775E,  # halogen_heaven_lamp_by_contempto_a_00
+    0x1274B029: 0x3A5EE732,  # hydrothera_bathtub_a_00
+    0x9AEE727: 0xCD98A854,  # master_suite_tub_a_00
+    0xCA88340B: 0xA2B792A8,  # oval_glass_sconce_a_00
+    0x1DCC5C48: 0x85AFAB17,  # sani_queen_bathtub_a_00
+    0x9CD3E29: 0x5E9076EB,  # top_brass_sconce_a_00
+    0x24F1E2A2: 0x3E88D019,  # torchosterone_floor_lamp_a_00
+    0xC890DFE1: 0x58A25BF4,  # torchosterone_table_lamp_a_00
+    0xABCE6013: 0x419B5794,  # vanity_mirror_a_00
 }
 
 
-THE_SIMS_BUSTIN_OUT_CHARACTER_FILE_NAME_LOOKUP = {
-    "blue_plate_sconce_a_00 8414147c": "blue_plate_sconce 64e0e172",
-    "bottle_lamp_a_00 5bc8dea": "bottle_lamp 9c9b1caf",
-    "cabinet_locker b29ee31a": "cabinet_amoire_locker 86d94398",
-    "carry_pizzabox_a_00 5e13146f": "carry_pizzabox 8de4b3fd",
-    "elite_reflections_chrome_lamp_a_00 ce23a4ef": "elite_reflections_chrome_lamp 91e7088e",
-    "fight_3d_part 87afd27c": "fighting_strip e63138fa",
-    "game_pooltable_club_x bf4f0a81": "aristoscratch_pool_table 868669be",
-    "halogen_heaven_lamp_by_contempto_a_00 f96953d1": "halogen_heaven_lamp_by_contempto 9cc7775e",
-    "hydrothera_bathtub_a_00 1274b029": "hydrothera_bathtub 3a5ee732",
-    "lamp_garden_streetlamp_industrial_off 9d84f77c": "lamp_garden_streetlamp_industrial 911367de",
-    "lamp_table_x_gooseneck_widehead_off 7515d4f0": "lamp_table_x_gooseneck_widehead 9414bd62",
-    "master_suite_tub_a_00 9aee727": "master_suite_tub cd98a854",
-    "o_lamp_wall_torch_arm_00 b1be609a": "lamp_wall_torch_arm 148ff674",
-    "oval_glass_sconce_a_00 ca88340b": "oval_glass_sconce a2b792a8",
-    "pool_lshape 42d0b2ad": "pool_lshaped b9665e3",
-    "sani_queen_bathtub_a_00 1dcc5c48": "sani_queen_bathtub 85afab17",
-    "top_brass_sconce_a_00 9cd3e29": "top_brass_sconce 5e9076eb",
-    "torchosterone_floor_lamp_a_00 24f1e2a2": "torchosterone_floor_lamp 3e88d019",
-    "torchosterone_table_lamp_a_00 c890dfe1": "torchosterone_table_lamp 58a25bf4",
-    "zz_visit_tron 2d24440b": "electronics_laser_light_show c5c69e99",
+THE_SIMS_BUSTIN_OUT_MODEL_ID_CHARACTER_ID_MAP = {
+    0x8414147C: 0x64E0E172,  # blue_plate_sconce_a_00
+    0x5BC8DEA: 0x9C9B1CAF,  # bottle_lamp_a_00
+    0xB29EE31A: 0x86D94398,  # cabinet_locker
+    0x5E13146F: 0x8DE4B3FD,  # carry_pizzabox_a_00
+    0xCE23A4EF: 0x91E7088E,  # elite_reflections_chrome_lamp_a_00
+    0x87AFD27C: 0xE63138FA,  # fight_3d_part
+    0xBF4F0A81: 0x868669BE,  # game_pooltable_club_x
+    0xF96953D1: 0x9CC7775E,  # halogen_heaven_lamp_by_contempto_a_00
+    0x1274B029: 0x3A5EE732,  # hydrothera_bathtub_a_00
+    0x9D84F77C: 0x911367DE,  # lamp_garden_streetlamp_industrial_off
+    0x7515D4F0: 0x9414BD62,  # lamp_table_x_gooseneck_widehead_off
+    0x9AEE727: 0xCD98A854,  # master_suite_tub_a_00
+    0xB1BE609A: 0x148FF674,  # o_lamp_wall_torch_arm_00
+    0xCA88340B: 0xA2B792A8,  # oval_glass_sconce_a_00
+    0x42D0B2AD: 0xB9665E3,  # pool_lshape
+    0x1DCC5C48: 0x85AFAB17,  # sani_queen_bathtub_a_00
+    0x9CD3E29: 0x5E9076EB,  # top_brass_sconce_a_00
+    0x24F1E2A2: 0x3E88D019,  # torchosterone_floor_lamp_a_00
+    0xC890DFE1: 0x58A25BF4,  # torchosterone_table_lamp_a_00
+    0x2D24440B: 0xC5C69E99,  # zz_visit_tron
 }
 
 
-THE_URBZ_CHARACTER_FILE_NAME_LOOKUP = {
-    "loading_dut fd7f6441": "load_urbz_cas 24c58257",
-    "loading_english 89a7ea61": "load_urbz_cas 24c58257",
-    "loading_finn 4d58e53c": "load_urbz_cas 24c58257",
-    "loading_fra dc67c203": "load_urbz_cas 24c58257",
-    "loading_ger 5c986d7c": "load_urbz_cas 24c58257",
-    "loading_ita 816122b8": "load_urbz_cas 24c58257",
-    "loading_japanese be91480": "load_urbz_cas 24c58257",
-    "loading_kor af6d7c92": "load_urbz_cas 24c58257",
-    "loading_norw e7d44fc": "load_urbz_cas 24c58257",
-    "loading_pol 45110d60": "load_urbz_cas 24c58257",
-    "loading_spa f4bcc11a": "load_urbz_cas 24c58257",
-    "loading_tchinese 2ab2ed87": "load_urbz_cas 24c58257",
+THE_URBZ_MODEL_ID_CHARACTER_ID_MAP = {
+    0xFD7F6441: 0x24C58257,  # loading_dut
+    0x89A7EA61: 0x24C58257,  # loading_english
+    0x4D58E53C: 0x24C58257,  # loading_finn
+    0xDC67C203: 0x24C58257,  # loading_fra
+    0x5C986D7C: 0x24C58257,  # loading_ger
+    0x816122B8: 0x24C58257,  # loading_ita
+    0xBE91480: 0x24C58257,  # loading_japanese
+    0xAF6D7C92: 0x24C58257,  # loading_kor
+    0xE7D44FC: 0x24C58257,  # loading_norw
+    0x45110D60: 0x24C58257,  # loading_pol
+    0xF4BCC11A: 0x24C58257,  # loading_spa
+    0x2AB2ED87: 0x24C58257,  # loading_tchinese
 }
 
 
-THE_SIMS_2_CHARACTER_FILE_NAME_LOOKUP = {
-    "dm_bulldog fcdcc7aa": "dm dda1a5d3",
-    "o_painting_eyetoy_2 6bf6c17f": "o_painting_eyetoy_1 f2ff90c5",
-    "o_painting_eyetoy_3 1cf1f1e9": "o_painting_eyetoy_1 f2ff90c5",
-    "o_painting_eyetoy_4 8295644a": "o_painting_eyetoy_1 f2ff90c5",
-    "o_painting_eyetoy_5 f59254dc": "o_painting_eyetoy_1 f2ff90c5",
-    "o_painting_landscape_eyetoy_2 6143fd5": "o_painting_landscape_eyetoy_1 9f1d6e6f",
-    "o_painting_landscape_eyetoy_3 71130f43": "o_painting_landscape_eyetoy_1 9f1d6e6f",
-    "o_painting_landscape_eyetoy_4 ef779ae0": "o_painting_landscape_eyetoy_1 9f1d6e6f",
-    "o_painting_landscape_eyetoy_5 9870aa76": "o_painting_landscape_eyetoy_1 9f1d6e6f",
-    "o_poster_eyetoy_2 a1dc2732": "o_poster_eyetoy_1 38d57688",
-    "o_poster_eyetoy_3 d6db17a4": "o_poster_eyetoy_1 38d57688",
-    "o_poster_eyetoy_4 48bf8207": "o_poster_eyetoy_1 38d57688",
-    "o_poster_eyetoy_5 3fb8b291": "o_poster_eyetoy_1 38d57688",
-    "plumbing_bathtub_ornate_2x1 82fac10a": "oriental_tub fa1581e6",
-    "plumbing_bathtub_ornate_2x1_empty_clean 14d1270f": "oriental_tub fa1581e6",
-    "plumbing_bathtub_ornate_new 84acf84f": "oriental_tub fa1581e6",
-    "plumbing_bathtub_ornate_new_empty_clean 28261df3": "oriental_tub fa1581e6",
-    "plumbing_hottub_antigrav_doliphin 1a8c4249": "plumbing_hottub_antigrav 94d1d6ca",
-    "plumbing_hottub_antigrav_waterblob ec5384bd": "plumbing_hottub_antigrav 94d1d6ca",
+THE_SIMS_2_MODEL_ID_CHARACTER_ID_MAP = {
+    0xFCDCC7AA: 0xDDA1A5D3,  # dm_bulldog
+    0x6BF6C17F: 0xF2FF90C5,  # o_painting_eyetoy_2
+    0x1CF1F1E9: 0xF2FF90C5,  # o_painting_eyetoy_3
+    0x8295644A: 0xF2FF90C5,  # o_painting_eyetoy_4
+    0xF59254DC: 0xF2FF90C5,  # o_painting_eyetoy_5
+    0x6143FD5: 0x9F1D6E6F,  # o_painting_landscape_eyetoy_2
+    0x71130F43: 0x9F1D6E6F,  # o_painting_landscape_eyetoy_3
+    0xEF779AE0: 0x9F1D6E6F,  # o_painting_landscape_eyetoy_4
+    0x9870AA76: 0x9F1D6E6F,  # o_painting_landscape_eyetoy_5
+    0xA1DC2732: 0x38D57688,  # o_poster_eyetoy_2
+    0xD6DB17A4: 0x38D57688,  # o_poster_eyetoy_3
+    0x48BF8207: 0x38D57688,  # o_poster_eyetoy_4
+    0x3FB8B291: 0x38D57688,  # o_poster_eyetoy_5
+    0x82FAC10A: 0xFA1581E6,  # plumbing_bathtub_ornate_2x1
+    0x14D1270F: 0xFA1581E6,  # plumbing_bathtub_ornate_2x1_empty_clean
+    0x84ACF84F: 0xFA1581E6,  # plumbing_bathtub_ornate_new
+    0x28261DF3: 0xFA1581E6,  # plumbing_bathtub_ornate_new_empty_clean
+    0x1A8C4249: 0x94D1D6CA,  # plumbing_hottub_antigrav_doliphin
+    0xEC5384BD: 0x94D1D6CA,  # plumbing_hottub_antigrav_waterblob
 }
 
 
-def get_character_file_path_from_model_file_path(file_path: pathlib.Path, game_type: utils.GameType) -> pathlib.Path:
-    """Get the character file path from the given model file path."""
-    directory = file_path.parent
-    file_name = file_path.stem.casefold()
+def get_character_id_from_model_id(model_name: str, model_id: int, game_type: utils.GameType) -> int:
+    """Get the character ID from the model name or ID."""
+    if model_name.startswith(("fa_", "af_")):
+        return 0x1FB80AF4
 
-    if file_name.startswith(("fa_", "af_")):
-        return directory / "characters" / "female_adult 1fb80af4"
+    if model_name.startswith(("ma_", "am_")):
+        return 0xFFA60350
 
-    if file_name.startswith(("ma_", "am_")):
-        return directory / "characters" / "Male_adult ffa60350"
-
-    if game_type in (utils.GameType.THESIMS, utils.GameType.THESIMSBUSTINOUT) and file_name.startswith(
+    if game_type in (utils.GameType.THESIMS, utils.GameType.THESIMSBUSTINOUT) and model_name.startswith(
         ("fc_", "cf_", "mc_", "cm_"),
     ):
-        return directory / "characters" / "child d5e79699"
+        return 0xD5E79699
+
+    character_id = model_id
 
     match game_type:
         case utils.GameType.THESIMS:
-            file_name = THE_SIMS_CHARACTER_FILE_NAME_LOOKUP.get(file_name, file_name)
+            character_id = THE_SIMS_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
         case utils.GameType.THESIMSBUSTINOUT:
-            file_name = THE_SIMS_BUSTIN_OUT_CHARACTER_FILE_NAME_LOOKUP.get(file_name, file_name)
+            character_id = THE_SIMS_BUSTIN_OUT_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
         case utils.GameType.THEURBZ:
-            file_name = THE_URBZ_CHARACTER_FILE_NAME_LOOKUP.get(file_name, file_name)
+            character_id = THE_URBZ_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
         case utils.GameType.THESIMS2:
-            file_name = THE_SIMS_2_CHARACTER_FILE_NAME_LOOKUP.get(file_name, file_name)
+            character_id = THE_SIMS_2_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
 
-    return directory / "characters" / file_name
+    return character_id
 
 
 def read_animation_id(file: typing.BinaryIO, game_type: utils.GameType, endianness: str) -> int | None:
@@ -246,14 +246,18 @@ def get_animation_model_id_from_model_id(model_id: int, game_type: utils.GameTyp
 def import_character(
     context: bpy.types.Context,
     logger: logging.Logger,
-    file_path: pathlib.Path,
+    character_id_file_path_map: dict[int, pathlib.Path],
+    model_name: str,
+    model_id: int,
     game_type: utils.GameType,
     endianness: str,
     collection: bpy.types.Collection,
 ) -> bpy.types.Object | None:
     """Import a character file."""
-    character_file_path = get_character_file_path_from_model_file_path(file_path, game_type)
-    if not character_file_path.is_file():
+    character_id = get_character_id_from_model_id(model_name, model_id, game_type)
+
+    character_file_path = character_id_file_path_map.get(character_id)
+    if character_file_path is None:
         return None
 
     try:
@@ -369,13 +373,14 @@ def import_model(
     context: bpy.types.Context,
     logger: logging.Logger,
     file_path: pathlib.Path,
-    the_sims_texture_list: list[pathlib.Path],
-    the_sims_bustin_out_texture_list: list[pathlib.Path],
-    the_urbz_texture_list: list[pathlib.Path],
-    the_sims_2_texture_list: list[pathlib.Path],
-    the_sims_2_pets_texture_list: list[pathlib.Path],
-    the_sims_2_castaway_texture_list: list[pathlib.Path],
-    animation_file_list: list[pathlib.Path],
+    the_sims_texture_list: dict[int, pathlib.Path],
+    the_sims_bustin_out_texture_list: dict[int, pathlib.Path],
+    the_urbz_texture_list: dict[int, pathlib.Path],
+    the_sims_2_texture_list: dict[int, pathlib.Path],
+    the_sims_2_pets_texture_list: dict[int, pathlib.Path],
+    the_sims_2_castaway_texture_list: dict[int, pathlib.Path],
+    character_id_file_path_map: dict[int, pathlib.Path],
+    animation_id_file_path_map: dict[int, pathlib.Path],
     *,
     import_animations: bool,
 ) -> list[bpy.types.Object]:
@@ -393,11 +398,15 @@ def import_model(
     if file_collection.name not in context.collection.children:
         context.collection.children.link(file_collection)
 
+    model_id = checksum.calculate(file_path.stem)
+
     if import_animations:
         armature_object = import_character(
             context,
             logger,
-            file_path,
+            character_id_file_path_map,
+            model_desc.name,
+            model_id,
             model_desc.game,
             model_desc.endianness,
             file_collection,
@@ -516,14 +525,13 @@ def import_model(
                     texture_file_list = the_sims_2_castaway_texture_list
 
             texture_id = texture_loader.lookup_shader_id_texture_id(mesh_desc.texture_id, model_desc.game)
-            texture_id_string = f'{texture_id:x}'
 
-            for texture_file_path in texture_file_list:
-                if texture_file_path.stem.endswith(texture_id_string):
-                    texture_loader.create_material(obj, texture_file_path.stem, texture_file_path)
+            texture_file_path = texture_file_list.get(texture_id, None)
+
+            if texture_file_path:
+                texture_loader.create_material(obj, texture_file_path.stem, texture_file_path)
 
     if armature_object:
-        model_id = int(file_path.stem.split()[-1], 16)
         animation_model_id = get_animation_model_id_from_model_id(model_id, model_desc.game)
 
         animation_ids = read_animation_ids_from_model_id(
@@ -533,18 +541,17 @@ def import_model(
             animation_model_id,
         )
 
-        for animation_file_path in animation_file_list:
-            for animation_id in animation_ids:
-                animation_id_string = f"{animation_id:x}"
-                if animation_file_path.stem.endswith(animation_id_string) and animation_file_path.suffix != ".json":
-                    import_animation(
-                        context,
-                        logger,
-                        animation_file_path,
-                        model_desc.game,
-                        model_desc.endianness,
-                        armature_object,
-                    )
+        for animation_id in animation_ids:
+            animation_file_path = animation_id_file_path_map.get(animation_id)
+            if animation_file_path:
+                import_animation(
+                    context,
+                    logger,
+                    animation_file_path,
+                    model_desc.game,
+                    model_desc.endianness,
+                    armature_object,
+                )
 
         if armature_object.animation_data is not None and armature_object.animation_data.nla_tracks is not None:
             armature_object.animation_data.action = armature_object.animation_data.nla_tracks[0].strips[0].action
@@ -552,11 +559,14 @@ def import_model(
     return object_list
 
 
-def get_texture_file_list(directory_string: str) -> list[pathlib.Path]:
-    """Get a list of all texture files from the given directory."""
-    if directory_string != "":
-        return list(pathlib.Path(directory_string).glob("*.png"))
-    return []
+def create_id_file_path_map(directory: pathlib.Path) -> dict[int, pathlib.Path]:
+    """Create a map between checksum IDs and file paths."""
+    if directory.is_dir():
+        file_dict = {}
+        for file_path in directory.glob("*"):
+            file_dict[checksum.calculate(file_path.stem)] = file_path
+        return file_dict
+    return {}
 
 
 def import_files(
@@ -574,32 +584,32 @@ def import_files(
     if bpy.ops.object.select_all.poll():
         bpy.ops.object.select_all(action='DESELECT')
 
-    the_sims_texture_list = get_texture_file_list(
-        context.preferences.addons["io_scene_tsc"].preferences.the_sims_texture_directory,
+    the_sims_texture_list = create_id_file_path_map(
+        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_texture_directory),
     )
 
-    the_sims_bustin_out_texture_list = get_texture_file_list(
-        context.preferences.addons["io_scene_tsc"].preferences.the_sims_bustin_out_texture_directory,
+    the_sims_bustin_out_texture_list = create_id_file_path_map(
+        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_bustin_out_texture_directory),
     )
 
-    the_urbz_texture_list = get_texture_file_list(
-        context.preferences.addons["io_scene_tsc"].preferences.the_urbz_texture_directory,
+    the_urbz_texture_list = create_id_file_path_map(
+        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_urbz_texture_directory),
     )
 
-    the_sims_2_texture_list = get_texture_file_list(
-        context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_texture_directory,
+    the_sims_2_texture_list = create_id_file_path_map(
+        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_texture_directory),
     )
 
-    the_sims_2_pets_texture_list = get_texture_file_list(
-        context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_pets_texture_directory,
+    the_sims_2_pets_texture_list = create_id_file_path_map(
+        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_pets_texture_directory),
     )
 
-    the_sims_2_castaway_texture_list = get_texture_file_list(
-        context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_castaway_texture_directory,
+    the_sims_2_castaway_texture_list = create_id_file_path_map(
+        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_castaway_texture_directory),
     )
 
-    animations_directory = file_paths[0].parent / "animations"
-    animation_file_list = list(animations_directory.glob("*"))
+    character_id_file_path_map = create_id_file_path_map(file_paths[0].parent / "characters")
+    animation_id_file_path_map = create_id_file_path_map(file_paths[0].parent / "animations")
 
     object_list = []
 
@@ -614,7 +624,8 @@ def import_files(
             the_sims_2_texture_list,
             the_sims_2_pets_texture_list,
             the_sims_2_castaway_texture_list,
-            animation_file_list,
+            character_id_file_path_map,
+            animation_id_file_path_map,
             import_animations=import_animations,
         )
 
