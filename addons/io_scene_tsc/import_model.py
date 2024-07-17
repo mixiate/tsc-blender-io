@@ -206,6 +206,7 @@ def import_animation(
     track = armature_object.animation_data.nla_tracks.new(prev=None)
     track.name = anim_desc.name
     track.strips.new(anim_desc.name, 1, action)
+    track.mute = True
 
     context.scene.render.fps = 60
     context.scene.frame_end = max(context.scene.frame_end, anim_desc.frame_count)
