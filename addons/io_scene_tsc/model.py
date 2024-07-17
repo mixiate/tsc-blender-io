@@ -373,7 +373,7 @@ def read_the_sims_model(file: typing.BinaryIO, endianness: str) -> Object:
     """Read The Sims Model."""
     file.read(2)
 
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    name = utils.read_null_terminated_string(file)
 
     file.read(1)
 
@@ -398,7 +398,7 @@ def read_the_sims_bustin_out_model(file: typing.BinaryIO, endianness: str) -> Ob
     """Read The Sims Bustin' Out Model."""
     file.read(2)
 
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    name = utils.read_null_terminated_string(file)
 
     file.read(16)
     unknown_count = struct.unpack(endianness + 'I', file.read(4))[0]
@@ -428,7 +428,7 @@ def read_the_urbz_model(file: typing.BinaryIO, endianness: str) -> Object:
     """Read The Urbz Model."""
     file.read(16)
 
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    name = utils.read_null_terminated_string(file)
 
     file.read(4)
     file.read(53)

@@ -54,7 +54,7 @@ def read_bone(file: typing.BinaryIO, endianness: str) -> Bone:
         ),
     )
 
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    name = utils.read_null_terminated_string(file)
 
     return Bone(name, children, translation, rotation, matrix, matrix_inverse)
 
@@ -69,7 +69,7 @@ class Character:
 
 def read_the_sims_character(file: typing.BinaryIO, endianness: str) -> Character:
     """Read The Sims character."""
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    name = utils.read_null_terminated_string(file)
 
     bone_count = struct.unpack(endianness + 'I', file.read(4))[0]
 
@@ -84,7 +84,7 @@ def read_the_sims_2_character(file: typing.BinaryIO, endianness: str) -> Charact
     """Read The Sims 2 character."""
     file.read(16)
 
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    name = utils.read_null_terminated_string(file)
 
     file.read(4)
 

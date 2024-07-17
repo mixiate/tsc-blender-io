@@ -275,7 +275,7 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
         case utils.GameType.THESIMS2:
             file.read(16)
 
-    name = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+    name = utils.read_null_terminated_string(file)
 
     match game_type:
         case utils.GameType.THESIMS2:
@@ -298,6 +298,8 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
             bone_size = 32
         case utils.GameType.THESIMS2:
             bone_size = 32
+        case _:
+            raise utils.FileReadError
 
     file.seek(bone_position + (bone_count * bone_size) + 4)
     static_float_count = struct.unpack(endianness + 'I', file.read(4))[0]
@@ -335,7 +337,7 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
 
         for _ in range(sound_count):
             file.read(8)
-            _ = ''.join(iter(lambda: file.read(1).decode('ascii'), '\x00'))
+            _ = utils.read_null_terminated_string(file)
 
     if len(file.read(4)) != 4:
         raise utils.FileReadError

@@ -4,6 +4,7 @@ import bmesh
 import bpy
 import contextlib
 import copy
+import itertools
 import logging
 import math
 import mathutils
@@ -95,15 +96,34 @@ def import_animation(
     context: bpy.types.Context,
     logger: logging.Logger,
     file_path: pathlib.Path,
-    game_type: utils.GameType,
-    endianness: str,
+    game_type: utils.GameType | None,
+    endianness: str | None,
     armature_object: bpy.types.Object,
 ) -> None:
     """Import an animation file."""
-    try:
-        anim_desc = animation.read_file(file_path, game_type, endianness)
-    except utils.FileReadError as _:
+    anim_desc = None
+
+    if game_type is not None and endianness is not None:
+        try:
+            anim_desc = animation.read_file(file_path, game_type, endianness)
+        except utils.FileReadError as _:
+            logger.info(f"Could not load animation {file_path}")  # noqa: G004
+            return
+    else:
+        game_types = [x for x in utils.GameType for _ in range(2)]
+        for game_type, endianness in zip(game_types, itertools.cycle(['<', '>'])):
+            try:
+                anim_desc = animation.read_file(file_path, game_type, endianness)
+                break
+            except utils.FileReadError as _:
+                continue
+
+    if anim_desc is None:
         logger.info(f"Could not load animation {file_path}")  # noqa: G004
+        return
+
+    if len(anim_desc.bones) != len(armature_object.data.bones):
+        logger.info(f"Could not apply animation {anim_desc.name} to {armature_object.name}")  # noqa: G004
         return
 
     armature_object.animation_data_create()
@@ -200,11 +220,7 @@ def import_model(
     import_animations: bool,
 ) -> list[bpy.types.Object]:
     """Import a model file."""
-    try:
-        model_desc = model.read_file(file_path)
-    except utils.FileReadError as _:
-        logger.info(f"Could not load model {file_path}")  # noqa: G004
-        return []
+    model_desc = model.read_file(file_path)
 
     object_list = []
 
@@ -403,13 +419,28 @@ def import_files(
     object_list = []
 
     for file_path in file_paths:
-        object_list += import_model(
-            context,
-            logger,
-            file_path,
-            id_file_path_maps,
-            import_animations=import_animations,
-        )
+        try:
+            object_list += import_model(
+                context,
+                logger,
+                file_path,
+                id_file_path_maps,
+                import_animations=import_animations,
+            )
+        except utils.FileReadError as _:  # noqa: PERF203
+            if context.view_layer.objects.active is not None and context.view_layer.objects.active.type == 'ARMATURE':
+                import_animation(
+                    context,
+                    logger,
+                    file_path,
+                    None,
+                    None,
+                    context.view_layer.objects.active,
+                )
+                continue
+
+            logger.info(f"Could not import {file_path} as model or animation")  # noqa: G004
+            return
 
     if cleanup_meshes:
         previous_active_object = context.view_layer.objects.active
