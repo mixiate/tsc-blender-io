@@ -371,5 +371,5 @@ def read_file(file_path: pathlib.Path, game_type: utils.GameType, endianness: st
 
             return animation
 
-    except (OSError, IndexError, struct.error) as exception:
+    except (OSError, IndexError, ValueError, ZeroDivisionError, struct.error) as exception:
         raise utils.FileReadError from exception
