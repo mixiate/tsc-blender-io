@@ -46,6 +46,8 @@ THE_SIMS_BUSTIN_OUT_MODEL_ID_CHARACTER_ID_MAP = {
 
 
 THE_URBZ_MODEL_ID_CHARACTER_ID_MAP = {
+    0xFCDCC7AA: 0xDDA1A5D3,  # dm_bulldog
+    0xAC7613EE: 0xEF97C751,  # fm_cat
     0xFD7F6441: 0x24C58257,  # loading_dut
     0x89A7EA61: 0x24C58257,  # loading_english
     0x4D58E53C: 0x24C58257,  # loading_finn
@@ -58,6 +60,18 @@ THE_URBZ_MODEL_ID_CHARACTER_ID_MAP = {
     0x45110D60: 0x24C58257,  # loading_pol
     0xF4BCC11A: 0x24C58257,  # loading_spa
     0x2AB2ED87: 0x24C58257,  # loading_tchinese
+    0x5F097789: 0xC631E9A,  # mm_monkey
+    0x51C0756: 0xFFA60350,  # npc_captain_catastrophe
+    0x992EEB73: 0x1FB80AF4,  # NPC_catwoman
+    0x1B0F1BFC: 0xFFA60350,  # npc_chinese_food_deliveryman
+    0x67BDD567: 0xFFA60350,  # NPC_cop
+    0xB99FA3F9: 0xFFA60350,  # npc_darius
+    0x20522B4D: 0xFFA60350,  # NPC_Firefighter
+    0x1848BC46: 0xFFA60350,  # npc_harry_the_hustler
+    0xE7AC3CB4: 0x1FB80AF4,  # npc_hot_topic_girl
+    0x93A0F0C9: 0xFFA60350,  # npc_jj_helper
+    0x53BBF6CD: 0xFFA60350,  # npc_mopoe
+    0xF50EA6F6: 0xFFA60350,  # NPC_Reaper
 }
 
 
