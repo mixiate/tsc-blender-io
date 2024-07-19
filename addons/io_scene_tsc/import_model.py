@@ -342,23 +342,9 @@ def import_model(
                 bpy.ops.object.parent_set(type='ARMATURE')
                 bpy.ops.object.select_all(action='DESELECT')
 
-            match model_desc.game:
-                case utils.GameType.THESIMS:
-                    texture_id_file_path_map = id_file_path_maps.the_sims.get()
-                case utils.GameType.THESIMSBUSTINOUT:
-                    texture_id_file_path_map = id_file_path_maps.the_sims_bustin_out.get()
-                case utils.GameType.THEURBZ:
-                    texture_id_file_path_map = id_file_path_maps.the_urbz.get()
-                case utils.GameType.THESIMS2:
-                    texture_id_file_path_map = id_file_path_maps.the_sims_2.get()
-                case utils.GameType.THESIMS2PETS:
-                    texture_id_file_path_map = id_file_path_maps.the_sims_2_pets.get()
-                case utils.GameType.THESIMS2CASTAWAY:
-                    texture_id_file_path_map = id_file_path_maps.the_sims_2_castaway.get()
-
             texture_id = texture_loader.lookup_shader_id_texture_id(mesh_desc.texture_id, model_desc.game)
 
-            texture_file_path = texture_id_file_path_map.get(texture_id, None)
+            texture_file_path = id_file_path_maps.textures.get().get(texture_id, None)
 
             if texture_file_path:
                 texture_loader.create_material(obj, texture_file_path.stem, texture_file_path)
@@ -367,7 +353,7 @@ def import_model(
         animation_model_id = animation_id_lookup.get_animation_model_id_from_model_id(model_id, model_desc.game)
 
         animation_ids = animation_id_lookup.list_animation_ids_from_model_id(
-            file_path.parent / "animations" / "quickdat.arc",
+            file_path.parent.parent / "quickdat" / "SimsObjects",
             model_desc.game,
             model_desc.endianness,
             animation_model_id,
@@ -407,14 +393,9 @@ def import_files(
         bpy.ops.object.select_all(action='DESELECT')
 
     id_file_path_maps = id_file_path_map.IDFilePathMaps(
-        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_texture_directory),
-        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_bustin_out_texture_directory),
-        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_urbz_texture_directory),
-        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_texture_directory),
-        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_pets_texture_directory),
-        pathlib.Path(context.preferences.addons["io_scene_tsc"].preferences.the_sims_2_castaway_texture_directory),
-        file_paths[0].parent / "characters",
-        file_paths[0].parent / "animations",
+        file_paths[0].parent.parent / "characters",
+        file_paths[0].parent.parent / "animations",
+        file_paths[0].parent.parent / "textures",
     )
 
     object_list = []

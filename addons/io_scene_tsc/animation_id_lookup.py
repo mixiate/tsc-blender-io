@@ -26,7 +26,7 @@ SIMS_2_MODEL_ID_ANIMATION_MODEL_ID_LOOKUP = {
 
 
 def get_animation_model_id_from_model_id(model_id: int, game_type: utils.GameType) -> int:
-    """Get the animation model id from the model id."""
+    """Get the animation model ID from the model ID."""
     animation_model_id = model_id
     match game_type:
         case utils.GameType.THESIMS2:
@@ -36,7 +36,7 @@ def get_animation_model_id_from_model_id(model_id: int, game_type: utils.GameTyp
 
 
 def read_animation_id(file: typing.BinaryIO, game_type: utils.GameType, endianness: str) -> int | None:
-    """Read an animation id from a quickdat file."""
+    """Read an animation ID from a SimsObject file."""
     file.read(8)
 
     animation_id = struct.unpack(endianness + 'I', file.read(4))[0]
@@ -52,12 +52,12 @@ def read_animation_id(file: typing.BinaryIO, game_type: utils.GameType, endianne
 
 
 def list_animation_ids_from_model_id(
-    quickdat_file_path: pathlib.Path,
+    sims_objects_file_path: pathlib.Path,
     game_type: utils.GameType,
     endianness: str,
     model_id: int,
 ) -> list[int]:
-    """Read animation ids from a quickdat file."""
+    """Read animation IDs from a SimsObject file."""
     # bustin' out map
     if game_type == utils.GameType.THESIMSBUSTINOUT and model_id == 0x50AE831:
         return [0x92D8AE4A, 0x30AA9779, 0x6BCF6EE9]
@@ -85,22 +85,22 @@ def list_animation_ids_from_model_id(
 
     match game_type:
         case utils.GameType.THESIMS:
-            start_position = 1792483
+            start_position = 1792468
             end_position = 1833523
         case utils.GameType.THESIMSBUSTINOUT:
-            start_position = 2868768
+            start_position = 2868764
             end_position = 2934816
         case utils.GameType.THEURBZ:
-            start_position = 1567008
+            start_position = 1566992
             end_position = 1615672
         case utils.GameType.THESIMS2:
-            start_position = 982320
+            start_position = 982304
             end_position = 1040972
         case _:
             return []
 
     try:
-        with quickdat_file_path.open(mode='rb') as file:
+        with sims_objects_file_path.open(mode='rb') as file:
             file.seek(start_position)
             while True:
                 if file.tell() > end_position:

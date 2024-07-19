@@ -41,33 +41,17 @@ class IDFilePathMap:
 class IDFilePathMaps:
     """Lazy Loading ID to file path maps."""
 
-    the_sims: IDFilePathMap
-    the_sims_bustin_out: IDFilePathMap
-    the_urbz: IDFilePathMap
-    the_sims_2: IDFilePathMap
-    the_sims_2_pets: IDFilePathMap
-    the_sims_2_castaway: IDFilePathMap
-
     characters: IDFilePathMap
     animations: IDFilePathMap
+    textures: IDFilePathMap
 
     def __init__(
         self,
-        the_sims: pathlib.Path,
-        the_sims_bustin_out: pathlib.Path,
-        the_urbz: pathlib.Path,
-        the_sims_2: pathlib.Path,
-        the_sims_2_pets: pathlib.Path,
-        the_sims_2_castaway: pathlib.Path,
         characters: pathlib.Path,
         animations: pathlib.Path,
+        textures: pathlib.Path,
     ) -> None:
         """Initialize IDFilePathMaps."""
-        self.the_sims = IDFilePathMap(the_sims)
-        self.the_sims_bustin_out = IDFilePathMap(the_sims_bustin_out)
-        self.the_urbz = IDFilePathMap(the_urbz)
-        self.the_sims_2 = IDFilePathMap(the_sims_2)
-        self.the_sims_2_pets = IDFilePathMap(the_sims_2_pets)
-        self.the_sims_2_castaway = IDFilePathMap(the_sims_2_castaway)
         self.characters = IDFilePathMap(characters)
         self.animations = IDFilePathMap(animations)
+        self.textures = IDFilePathMap(textures)
