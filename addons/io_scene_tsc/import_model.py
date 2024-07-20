@@ -18,6 +18,7 @@ from . import character_id_lookup
 from . import checksum
 from . import id_file_path_map
 from . import model
+from . import shader
 from . import texture_loader
 from . import utils
 
@@ -342,12 +343,34 @@ def import_model(
                 bpy.ops.object.parent_set(type='ARMATURE')
                 bpy.ops.object.select_all(action='DESELECT')
 
-            texture_id = texture_loader.lookup_shader_id_texture_id(mesh_desc.texture_id, model_desc.game)
+            shader_file_path = id_file_path_maps.shaders.get().get(mesh_desc.shader_id, None)
 
-            texture_file_path = id_file_path_maps.textures.get().get(texture_id, None)
+            if shader_file_path is not None:
+                shader_desc = None
+                try:
+                    shader_desc = shader.read_file(shader_file_path, model_desc.game, model_desc.endianness)
+                except utils.FileReadError as _:
+                    logger.info(f"Could not import shader {shader_file_path}")  # noqa: G004
 
-            if texture_file_path:
-                texture_loader.create_material(obj, texture_file_path.stem, texture_file_path)
+                if type(shader_desc) is shader.ShaderIDs:
+                    shader_file_path = id_file_path_maps.shaders.get().get(shader_desc.ids[-1], None)
+
+                    if shader_file_path is not None:
+                        try:
+                            shader_desc = shader.read_file(shader_file_path, model_desc.game, model_desc.endianness)
+                        except utils.FileReadError as _:
+                            shader_desc = None
+                            logger.info(f"Could not import shader {shader_file_path}")  # noqa: G004
+                    else:
+                        shader_desc = None
+
+                if shader_desc is not None and shader_desc.render_passes:
+                    texture_id = shader_desc.render_passes[0].texture_id
+
+                    texture_file_path = id_file_path_maps.textures.get().get(texture_id, None)
+
+                    if texture_file_path:
+                        texture_loader.create_material(obj, shader_file_path.stem, texture_file_path)
 
     if armature_object:
         animation_model_id = animation_id_lookup.get_animation_model_id_from_model_id(model_id, model_desc.game)
@@ -395,6 +418,7 @@ def import_files(
     id_file_path_maps = id_file_path_map.IDFilePathMaps(
         file_paths[0].parent.parent / "characters",
         file_paths[0].parent.parent / "animations",
+        file_paths[0].parent.parent / "shaders",
         file_paths[0].parent.parent / "textures",
     )
 

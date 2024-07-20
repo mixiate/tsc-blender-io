@@ -114,7 +114,7 @@ class Mesh:
     bone_weights: list[tuple[int, int, int, int]]
     indices: list[int]
     strips: list[tuple[int, int]]
-    texture_id: int
+    shader_id: int
 
 
 MESH_FLAGS_HAS_UVS = 0b0000_0010
@@ -129,7 +129,7 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
     """Read mesh."""
     flags = struct.unpack(endianness + 'I', file.read(4))[0]
 
-    texture_id = struct.unpack(endianness + 'I', file.read(4))[0]
+    shader_id = struct.unpack(endianness + 'I', file.read(4))[0]
 
     strip_count = struct.unpack(endianness + 'I', file.read(4))[0]
     file.read(strip_count)
@@ -306,7 +306,7 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
         bone_weights,
         indices,
         strips,
-        texture_id,
+        shader_id,
     )
 
 
