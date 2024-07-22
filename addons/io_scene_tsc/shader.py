@@ -265,16 +265,43 @@ def read_shader_the_urbz(file: typing.BinaryIO, endianness: str) -> Shader | Sha
     )
 
 
-def read_shader_the_sims_2(file: typing.BinaryIO, endianness: str) -> Shader:
+def read_shader_ids_the_sims_2(file: typing.BinaryIO, endianness: str) -> ShaderIDs:
+    """Read The Sims 2 shader IDs."""
+    file.read(4)  # name size
+
+    _ = utils.read_null_terminated_string(file)
+
+    file.read(4)  # file size
+
+    file.read(5)
+
+    shader_id_count = struct.unpack(endianness + 'B', file.read(1))[0]
+
+    file.read(shader_id_count)
+
+    shader_ids = [struct.unpack(endianness + 'I', file.read(4))[0] for _ in range(shader_id_count)]
+
+    return ShaderIDs(shader_ids)
+
+
+def read_shader_the_sims_2(file: typing.BinaryIO, endianness: str) -> Shader | ShaderIDs:
     """Read The Sims 2 shader."""
     version = struct.unpack(endianness + 'I', file.read(4))[0]
     file_id = struct.unpack(endianness + 'I', file.read(4))[0]
     if version != 0x16 or file_id != 1397245010:
         raise utils.FileReadError
 
-    file.read(4)
+    shader_type = struct.unpack(endianness + 'I', file.read(4))[0]
 
-    file.read(4)
+    match shader_type:
+        case 0:
+            pass
+        case 1:
+            return read_shader_ids_the_sims_2(file, endianness)
+        case _:
+            raise utils.FileReadError
+
+    file.read(4)  # name size
 
     name = utils.read_null_terminated_string(file)
 
