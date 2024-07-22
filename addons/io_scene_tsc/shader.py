@@ -83,6 +83,40 @@ def read_render_pass_the_urbz(file: typing.BinaryIO, endianness: str) -> RenderP
     )
 
 
+def read_render_pass_the_sims_2_pets(file: typing.BinaryIO, endianness: str) -> RenderPass:
+    """Read The Sims 2 Pets render pass."""
+    texture_id = struct.unpack(endianness + 'I', file.read(4))[0]
+    file.read(8)
+    raster_modes = struct.unpack(endianness + 'I', file.read(4))[0]
+    flags = struct.unpack(endianness + 'I', file.read(4))[0]
+    alpha_test_threshold = struct.unpack(endianness + 'I', file.read(4))[0]
+    file.read(4)
+    blends = struct.unpack(endianness + '4B', file.read(4))
+    blend_fix = struct.unpack(endianness + 'B', file.read(1))[0]
+    combine = struct.unpack(endianness + 'B', file.read(1))[0]
+    texture_gen = struct.unpack(endianness + 'B', file.read(1))[0]
+    file.read(1)
+    post_texture_id_count = struct.unpack(endianness + 'B', file.read(1))[0]
+    file.read(1)
+    post_texture_id_count_other = struct.unpack(endianness + 'B', file.read(1))[0]
+
+    if len(file.read(9)) != 9:
+        raise utils.FileReadError
+
+    return RenderPass(
+        texture_id,
+        raster_modes,
+        flags,
+        blends,
+        blend_fix,
+        combine,
+        texture_gen,
+        alpha_test_threshold,
+        post_texture_id_count,
+        post_texture_id_count_other,
+    )
+
+
 @dataclasses.dataclass
 class Shader:
     """Shader."""
@@ -351,6 +385,66 @@ def read_shader_the_sims_2(file: typing.BinaryIO, endianness: str) -> Shader | S
     )
 
 
+def read_shader_the_sims_2_pets(file: typing.BinaryIO, endianness: str) -> Shader | ShaderIDs:
+    """Read The Sims 2 Pets shader."""
+    version = struct.unpack(endianness + 'I', file.read(4))[0]
+    file_id = struct.unpack(endianness + 'I', file.read(4))[0]
+    if version != 0x18 or file_id != 1397245010:
+        raise utils.FileReadError
+
+    shader_type = struct.unpack(endianness + 'I', file.read(4))[0]
+
+    match shader_type:
+        case 0:
+            pass
+        case 1:
+            return read_shader_ids_the_sims_2(file, endianness)
+        case _:
+            raise utils.FileReadError
+
+    file.read(4)  # name size
+
+    name = utils.read_null_terminated_string(file)
+
+    file.read(4)  # file size
+
+    render_pass_count = struct.unpack(endianness + 'B', file.read(1))[0]
+
+    file.read(6)
+
+    sort_value = struct.unpack(endianness + 'I', file.read(4))[0]
+
+    diffuse_color = struct.unpack(endianness + '3f', file.read(12))
+    file.read(4)
+    ambient_color = struct.unpack(endianness + '3f', file.read(12))
+    file.read(4)
+
+    file.read(16)
+
+    render_passes = [read_render_pass_the_sims_2_pets(file, endianness) for _ in range(render_pass_count)]
+
+    for render_pass in render_passes:
+        if render_pass.texture_id != 0:
+            continue
+        texture_ids = [
+            struct.unpack(endianness + 'I', file.read(4))[0] for _ in range(render_pass.post_texture_id_count)
+        ]
+        render_pass.texture_id = texture_ids[0]
+        file.read(render_pass.post_texture_id_count_other)
+
+    return Shader(
+        name,
+        render_passes,
+        0,
+        0,
+        sort_value,
+        0,
+        ambient_color,
+        diffuse_color,
+        0,
+    )
+
+
 def read_file(file_path: pathlib.Path, game_type: utils.GameType, endianness: str) -> Shader | ShaderIDs | None:
     """Read a shader file."""
     try:
@@ -366,6 +460,8 @@ def read_file(file_path: pathlib.Path, game_type: utils.GameType, endianness: st
                     shader = read_shader_the_urbz(file, endianness)
                 case utils.GameType.THESIMS2:
                     shader = read_shader_the_sims_2(file, endianness)
+                case utils.GameType.THESIMS2PETS:
+                    shader = read_shader_the_sims_2_pets(file, endianness)
 
             if len(file.read(1)) != 0:
                 raise utils.FileReadError
