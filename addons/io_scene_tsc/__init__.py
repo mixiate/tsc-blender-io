@@ -70,7 +70,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         import io
         import logging
         import pathlib
-        from . import import_model
+        from . import import_files
 
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)
@@ -80,7 +80,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         directory = pathlib.Path(self.directory)
         paths = [directory / file.name for file in self.files]
 
-        import_model.import_files(
+        import_files.import_files(
             context,
             logger,
             paths,

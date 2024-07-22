@@ -1,216 +1,20 @@
-"""Import The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets and The Sims 2 Castaway models."""
+"""Import models."""
 
 import bmesh
 import bpy
 import contextlib
-import copy
-import itertools
 import logging
-import math
 import mathutils
 import pathlib
 
 
-from . import animation
 from . import animation_id_lookup
-from . import character
-from . import character_id_lookup
 from . import checksum
 from . import id_file_path_map
+from . import import_animation
+from . import import_character
+from . import import_shader
 from . import model
-from . import shader
-from . import texture_loader
-from . import utils
-
-
-def import_character(
-    context: bpy.types.Context,
-    logger: logging.Logger,
-    character_id_file_path_map: dict[int, pathlib.Path],
-    model_name: str,
-    model_id: int,
-    game_type: utils.GameType,
-    endianness: str,
-    collection: bpy.types.Collection,
-) -> bpy.types.Object | None:
-    """Import a character file."""
-    character_id = character_id_lookup.get_character_id_from_model(model_name, model_id, game_type)
-
-    character_file_path = character_id_file_path_map.get(character_id)
-    if character_file_path is None:
-        return None
-
-    try:
-        char_desc = character.read_file(character_file_path, game_type, endianness)
-    except utils.FileReadError as _:
-        logger.info(f"Could not load character {character_file_path}")  # noqa: G004
-        return None
-
-    armature = bpy.data.armatures.new(name=char_desc.name)
-    armature_object = bpy.data.objects.new(name=char_desc.name, object_data=armature)
-
-    collection.objects.link(armature_object)
-
-    context.view_layer.objects.active = armature_object
-    bpy.ops.object.mode_set(mode='EDIT')
-
-    for bone in char_desc.bones:
-        armature_bone = armature.edit_bones.new(name=bone.name)
-
-        armature_bone.length = 0.075
-        armature_bone.matrix = mathutils.Matrix.LocRotScale(bone.translation, bone.rotation, None)
-        armature_bone.matrix @= utils.BONE_ROTATION_OFFSET
-
-    for bone_index, bone in enumerate(char_desc.bones):
-        for child_index in bone.children:
-            armature.edit_bones[child_index].parent = armature.edit_bones[bone_index]
-
-    for bone in armature.edit_bones:
-        if bone.parent and bone.head != bone.parent.head:
-            previous_parent_tail = copy.copy(bone.parent.tail)
-            previous_parent_quat = bone.parent.matrix.to_4x4().to_quaternion()
-            bone.parent.tail = bone.head
-            quaternion_difference = bone.parent.matrix.to_4x4().to_quaternion().dot(previous_parent_quat)
-            if not math.isclose(quaternion_difference, 1.0, rel_tol=1e-05):
-                bone.parent.tail = previous_parent_tail
-            else:
-                bone.use_connect = True
-
-            if len(bone.children) == 0:
-                bone.length = bone.parent.length
-
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.select_all(action='DESELECT')
-
-    return armature_object
-
-
-def create_fcurve_data(action: bpy.types.Action, data_path: str, index: int, data: list[float]) -> None:
-    """Create the fcurve data for all frames at once."""
-    f_curve = action.fcurves.new(data_path, index=index)
-    f_curve.keyframe_points.add(count=int(len(data) / 2))
-    f_curve.keyframe_points.foreach_set("co", data)
-    f_curve.update()
-
-
-def import_animation(
-    context: bpy.types.Context,
-    logger: logging.Logger,
-    file_path: pathlib.Path,
-    game_type: utils.GameType | None,
-    endianness: str | None,
-    armature_object: bpy.types.Object,
-) -> None:
-    """Import an animation file."""
-    anim_desc = None
-
-    if game_type is not None and endianness is not None:
-        try:
-            anim_desc = animation.read_file(file_path, game_type, endianness)
-        except utils.FileReadError as _:
-            logger.info(f"Could not load animation {file_path}")  # noqa: G004
-            return
-    else:
-        game_types = [x for x in utils.GameType for _ in range(2)]
-        for game_type, endianness in zip(game_types, itertools.cycle(['<', '>'])):
-            try:
-                anim_desc = animation.read_file(file_path, game_type, endianness)
-                break
-            except utils.FileReadError as _:
-                continue
-
-    if anim_desc is None:
-        logger.info(f"Could not load animation {file_path}")  # noqa: G004
-        return
-
-    if len(anim_desc.bones) != len(armature_object.data.bones):
-        logger.info(f"Could not apply animation {anim_desc.name} to {armature_object.name}")  # noqa: G004
-        return
-
-    armature_object.animation_data_create()
-
-    action = bpy.data.actions.get(anim_desc.name)
-    if action is not None:
-        armature_object.animation_data.action = action
-
-        track = armature_object.animation_data.nla_tracks.new(prev=None)
-        track.name = anim_desc.name
-        track.strips.new(anim_desc.name, 1, action)
-
-        return
-
-    action = bpy.data.actions.new(name=anim_desc.name)
-    armature_object.animation_data.action = action
-
-    action.frame_range = (1.0, anim_desc.frame_count)
-
-    for pose_bone, keyframes in zip(armature_object.pose.bones, anim_desc.bones):
-        bone_rotation = pose_bone.bone.matrix_local.to_quaternion()
-
-        rotation_keyframes_w = []
-        rotation_keyframes_x = []
-        rotation_keyframes_y = []
-        rotation_keyframes_z = []
-        for keyframe in keyframes.rotation_keyframes:
-            frame = float(keyframe.frame + 1)
-
-            rotation = ((bone_rotation.inverted() @ keyframe.rotation) @ bone_rotation).normalized()
-
-            rotation_keyframes_w += (frame, rotation.w)
-            rotation_keyframes_x += (frame, rotation.x)
-            rotation_keyframes_y += (frame, rotation.y)
-            rotation_keyframes_z += (frame, rotation.z)
-
-        if rotation_keyframes_w:
-            data_path = pose_bone.path_from_id("rotation_quaternion")
-            create_fcurve_data(action, data_path, 0, rotation_keyframes_w)
-            create_fcurve_data(action, data_path, 1, rotation_keyframes_x)
-            create_fcurve_data(action, data_path, 2, rotation_keyframes_y)
-            create_fcurve_data(action, data_path, 3, rotation_keyframes_z)
-
-        scale_keyframes_x = []
-        scale_keyframes_y = []
-        scale_keyframes_z = []
-        for keyframe in keyframes.scale_keyframes:
-            frame = float(keyframe.frame + 1)
-
-            scale = (mathutils.Matrix.LocRotScale(None, None, keyframe.vector) @ utils.BONE_ROTATION_OFFSET).to_scale()
-
-            scale_keyframes_x += (frame, scale.x)
-            scale_keyframes_y += (frame, scale.y)
-            scale_keyframes_z += (frame, scale.z)
-
-        if scale_keyframes_x:
-            data_path = pose_bone.path_from_id("scale")
-            create_fcurve_data(action, data_path, 0, scale_keyframes_x)
-            create_fcurve_data(action, data_path, 1, scale_keyframes_y)
-            create_fcurve_data(action, data_path, 2, scale_keyframes_z)
-
-        location_keyframes_x = []
-        location_keyframes_y = []
-        location_keyframes_z = []
-        for keyframe in keyframes.location_keyframes:
-            frame = float(keyframe.frame + 1)
-
-            location = bone_rotation.inverted() @ keyframe.vector
-
-            location_keyframes_x += (frame, location.x)
-            location_keyframes_y += (frame, location.y)
-            location_keyframes_z += (frame, location.z)
-
-        if location_keyframes_x:
-            data_path = pose_bone.path_from_id("location")
-            create_fcurve_data(action, data_path, 0, location_keyframes_x)
-            create_fcurve_data(action, data_path, 1, location_keyframes_y)
-            create_fcurve_data(action, data_path, 2, location_keyframes_z)
-
-    track = armature_object.animation_data.nla_tracks.new(prev=None)
-    track.name = anim_desc.name
-    track.strips.new(anim_desc.name, 1, action)
-    track.mute = True
-
-    context.scene.render.fps = 60
-    context.scene.frame_end = max(context.scene.frame_end, anim_desc.frame_count)
 
 
 def import_model(
@@ -234,7 +38,7 @@ def import_model(
     model_id = checksum.calculate(file_path.stem)
 
     if import_animations:
-        armature_object = import_character(
+        armature_object = import_character.import_character(
             context,
             logger,
             id_file_path_maps.characters.get(),
@@ -343,34 +147,17 @@ def import_model(
                 bpy.ops.object.parent_set(type='ARMATURE')
                 bpy.ops.object.select_all(action='DESELECT')
 
-            shader_file_path = id_file_path_maps.shaders.get().get(mesh_desc.shader_id, None)
+            material = import_shader.import_shader(
+                logger,
+                model_desc.game,
+                model_desc.endianness,
+                mesh_desc.shader_id,
+                id_file_path_maps.shaders.get(),
+                id_file_path_maps.textures.get(),
+            )
 
-            if shader_file_path is not None:
-                shader_desc = None
-                try:
-                    shader_desc = shader.read_file(shader_file_path, model_desc.game, model_desc.endianness)
-                except utils.FileReadError as _:
-                    logger.info(f"Could not import shader {shader_file_path}")  # noqa: G004
-
-                if type(shader_desc) is shader.ShaderIDs:
-                    shader_file_path = id_file_path_maps.shaders.get().get(shader_desc.ids[-1], None)
-
-                    if shader_file_path is not None:
-                        try:
-                            shader_desc = shader.read_file(shader_file_path, model_desc.game, model_desc.endianness)
-                        except utils.FileReadError as _:
-                            shader_desc = None
-                            logger.info(f"Could not import shader {shader_file_path}")  # noqa: G004
-                    else:
-                        shader_desc = None
-
-                if shader_desc is not None and shader_desc.render_passes:
-                    texture_id = shader_desc.render_passes[0].texture_id
-
-                    texture_file_path = id_file_path_maps.textures.get().get(texture_id, None)
-
-                    if texture_file_path:
-                        texture_loader.create_material(obj, shader_file_path.stem, texture_file_path)
+            if material:
+                obj.data.materials.append(material)
 
     if armature_object:
         animation_model_id = animation_id_lookup.get_animation_model_id_from_model_id(model_id, model_desc.game)
@@ -385,7 +172,7 @@ def import_model(
         for animation_id in animation_ids:
             animation_file_path = id_file_path_maps.animations.get().get(animation_id)
             if animation_file_path:
-                import_animation(
+                import_animation.import_animation(
                     context,
                     logger,
                     animation_file_path,
@@ -398,82 +185,3 @@ def import_model(
             armature_object.animation_data.action = armature_object.animation_data.nla_tracks[0].strips[0].action
 
     return object_list
-
-
-def import_files(
-    context: bpy.types.Context,
-    logger: logging.Logger,
-    file_paths: list[pathlib.Path],
-    *,
-    import_animations: bool,
-    cleanup_meshes: bool,
-) -> None:
-    """Import all the models in the selected files."""
-    if bpy.ops.object.mode_set.poll():
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-    if bpy.ops.object.select_all.poll():
-        bpy.ops.object.select_all(action='DESELECT')
-
-    id_file_path_maps = id_file_path_map.IDFilePathMaps(
-        file_paths[0].parent.parent / "characters",
-        file_paths[0].parent.parent / "animations",
-        file_paths[0].parent.parent / "shaders",
-        file_paths[0].parent.parent / "textures",
-    )
-
-    object_list = []
-
-    for file_path in file_paths:
-        try:
-            object_list += import_model(
-                context,
-                logger,
-                file_path,
-                id_file_path_maps,
-                import_animations=import_animations,
-            )
-        except utils.FileReadError as _:  # noqa: PERF203
-            if context.view_layer.objects.active is not None and context.view_layer.objects.active.type == 'ARMATURE':
-                import_animation(
-                    context,
-                    logger,
-                    file_path,
-                    None,
-                    None,
-                    context.view_layer.objects.active,
-                )
-                continue
-
-            logger.info(f"Could not import {file_path} as model or animation")  # noqa: G004
-            return
-
-    if cleanup_meshes:
-        previous_active_object = context.view_layer.objects.active
-        bpy.ops.object.select_all(action='DESELECT')
-
-        for obj in object_list:
-            obj.select_set(state=True)
-
-        context.view_layer.objects.active = object_list[0]
-
-        bpy.ops.object.mode_set(mode='EDIT')
-
-        bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
-        bpy.ops.mesh.select_all(action='SELECT')
-
-        bpy.ops.mesh.merge_normals()
-        bpy.ops.mesh.remove_doubles(use_sharp_edge_from_normals=True)
-        bpy.ops.mesh.faces_shade_smooth()
-
-        bpy.ops.mesh.select_all(action='DESELECT')
-
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-        for obj in object_list:
-            context.view_layer.objects.active = obj
-            bpy.ops.mesh.customdata_custom_splitnormals_clear()
-
-        bpy.ops.object.select_all(action='DESELECT')
-
-        context.view_layer.objects.active = previous_active_object
