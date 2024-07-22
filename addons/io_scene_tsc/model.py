@@ -158,73 +158,37 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
 
     previous_strip_end = 0
 
-    for _ in range(strip_count):
-        mesh_type = struct.unpack(endianness + 'B', file.read(1))[0]
+    strip_type = 0
 
-        if mesh_type == 4:
-            for _ in range(strip_count):
+    for _ in range(strip_count):
+        if strip_type != 4:
+            strip_type = struct.unpack(endianness + 'B', file.read(1))[0]
+
+        match strip_type:
+            case 2:
+                file.read(1)
+            case 4:
                 marker = struct.unpack(endianness + 'B', file.read(1))[0]
                 if marker == 5:
                     file.read(2)
 
-                vertex_count = struct.unpack(endianness + 'I', file.read(4))[0]
-
-                positions += read_vertices(file, vertex_count, float_type, endianness, scale)
-
-                if flags & MESH_FLAGS_HAS_UVS:
-                    uvs += read_uvs(file, vertex_count, float_type, endianness)
-
-                if flags & MESH_FLAGS_HAS_UNKNOWN:
-                    file.read(vertex_count * 4)
-
-                if flags & MESH_FLAGS_HAS_NORMALS:
-                    normal_format, normal_size = (
-                        (endianness + '4b', 4)
-                        if game
-                        in (
-                            utils.GameType.THESIMS2,
-                            utils.GameType.THESIMS2PETS,
-                            utils.GameType.THESIMS2CASTAWAY,
-                        )
-                        else (endianness + '3b', 3)
-                    )
-                    normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
-                    for normal_data in normals_data:
-                        normal = mathutils.Vector(
-                            (
-                                (float(normal_data[0]) + 0.5) / 127.5,
-                                (float(normal_data[1]) + 0.5) / 127.5,
-                                (float(normal_data[2]) + 0.5) / 127.5,
-                            ),
-                        ).normalized()
-                        normals.append(normal)
-
-                bones += [(0, 1, 2, 3) for _ in range(vertex_count)]
-
-                bone_weights += [struct.unpack(endianness + '4B', file.read(4)) for _ in range(vertex_count)]
-
-                strips.append((previous_strip_end, previous_strip_end + vertex_count))
-                previous_strip_end = previous_strip_end + vertex_count
-
-            break
-
-        if mesh_type == 2:
-            file.read(1)
-
+        bone_ids = []
         read_bone_weights = False
 
-        bone_ids = []
+        match strip_type:
+            case 1 | 2:
+                while True:
+                    bone_id = struct.unpack(endianness + 'H', file.read(2))[0]
+                    bone_ids.append(bone_id)
+                    if struct.unpack(endianness + '2B', file.read(2))[1] == 0:
+                        break
 
-        if mesh_type in (1, 2):
-            while True:
-                bone_id = struct.unpack(endianness + 'H', file.read(2))[0]
-                bone_ids.append(bone_id)
-                if struct.unpack(endianness + '2B', file.read(2))[1] == 0:
-                    break
-
+                    read_bone_weights = True
+            case 4:
+                bone_ids = [0, 1, 2, 3]
                 read_bone_weights = True
-        else:
-            bone_ids = [0]
+            case _:
+                bone_ids = [0]
 
         vertex_count = struct.unpack(endianness + 'I', file.read(4))[0]
 
