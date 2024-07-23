@@ -9,19 +9,19 @@ from . import shader
 from . import utils
 
 
-def create_material(material_name: str, texture_file_path: pathlib.Path) -> bpy.types.Material:
+def create_material(
+    material_name: str,
+    texture_file_path: pathlib.Path,
+    *,
+    has_alpha: bool,
+) -> bpy.types.Material:
     """Create a material with the given texture file."""
-    material_list = [material.name.casefold() for material in bpy.data.materials]
-    try:
-        material_index = material_list.index(material_name.casefold())
-        material = bpy.data.materials[material_index]
-    except ValueError as _:
-        material = None
+    material = bpy.data.materials.get(material_name, None)
 
     if material is None:
         material = bpy.data.materials.new(name=material_name)
 
-        image = bpy.data.images.get(texture_file_path.as_posix())
+        image = bpy.data.images.get(texture_file_path.name)
         if image is None:
             image = bpy.data.images.load(texture_file_path.as_posix())
         material.use_nodes = True
@@ -43,14 +43,18 @@ def create_material(material_name: str, texture_file_path: pathlib.Path) -> bpy.
             texture_file_path.stem + " specular" + texture_file_path.suffix,
         )
         if specular_file_path.is_file():
-            specular_image = bpy.data.images.get(specular_file_path.as_posix())
+            specular_image = bpy.data.images.get(specular_file_path.stem)
             if specular_image is None:
                 specular_image = bpy.data.images.load(specular_file_path.as_posix())
 
             specular_image_node = material.node_tree.nodes.new('ShaderNodeTexImage')
             specular_image_node.image = specular_image
 
-            material.node_tree.links.new(specular_image_node.outputs[0], principled_bsdf.inputs[12])
+            if has_alpha:
+                material.node_tree.links.new(specular_image_node.outputs[0], principled_bsdf.inputs[4])
+                material.blend_method = 'HASHED'
+            else:
+                material.node_tree.links.new(specular_image_node.outputs[0], principled_bsdf.inputs[12])
 
     return material
 
@@ -88,11 +92,23 @@ def import_shader(
                 shader_desc = None
 
         if shader_desc is not None and shader_desc.render_passes:
-            texture_id = shader_desc.render_passes[0].texture_id
+            render_pass = shader_desc.render_passes[0]
 
-            texture_file_path = texture_file_path_id_map.get(texture_id)
+            match game_type:
+                case utils.GameType.THESIMS | utils.GameType.THESIMSBUSTINOUT:
+                    has_alpha = render_pass.flags & 0x4 != 0
+                case utils.GameType.THEURBZ:
+                    has_alpha = render_pass.raster_modes & 0x40 != 0 or render_pass.flags & 0x4 != 0
+                case _:
+                    has_alpha = False
+
+            texture_file_path = texture_file_path_id_map.get(render_pass.texture_id)
 
             if texture_file_path:
-                material = create_material(shader_file_path.stem, texture_file_path)
+                material = create_material(
+                    shader_file_path.stem,
+                    texture_file_path,
+                    has_alpha=has_alpha,
+                )
 
     return material
