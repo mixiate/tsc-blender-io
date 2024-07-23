@@ -86,21 +86,20 @@ def read_render_pass_the_urbz(file: typing.BinaryIO, endianness: str) -> RenderP
 def read_render_pass_the_sims_2_pets(file: typing.BinaryIO, endianness: str) -> RenderPass:
     """Read The Sims 2 Pets render pass."""
     texture_id = struct.unpack(endianness + 'I', file.read(4))[0]
-    file.read(8)
-    raster_modes = struct.unpack(endianness + 'I', file.read(4))[0]
-    flags = struct.unpack(endianness + 'I', file.read(4))[0]
-    alpha_test_threshold = struct.unpack(endianness + 'I', file.read(4))[0]
-    file.read(4)
+    file.read(1)
+    raster_modes = struct.unpack(endianness + 'B', file.read(1))[0]
+    flags = struct.unpack(endianness + 'B', file.read(1))[0]
+    alpha_test_threshold = struct.unpack(endianness + 'f', file.read(4))[0]
     blends = struct.unpack(endianness + '4B', file.read(4))
     blend_fix = struct.unpack(endianness + 'B', file.read(1))[0]
     combine = struct.unpack(endianness + 'B', file.read(1))[0]
     texture_gen = struct.unpack(endianness + 'B', file.read(1))[0]
-    file.read(1)
+    file.read(2)
     post_texture_id_count = struct.unpack(endianness + 'B', file.read(1))[0]
-    file.read(1)
+    file.read(2)
     post_texture_id_count_other = struct.unpack(endianness + 'B', file.read(1))[0]
 
-    if len(file.read(9)) != 9:
+    if len(file.read(24)) != 24:
         raise utils.FileReadError
 
     return RenderPass(
