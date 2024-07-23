@@ -366,11 +366,13 @@ def read_shader_the_sims_2(file: typing.BinaryIO, endianness: str) -> Shader | S
     for render_pass in render_passes:
         if render_pass.texture_id != 0:
             continue
-        texture_ids = [
-            struct.unpack(endianness + 'I', file.read(4))[0] for _ in range(render_pass.post_texture_id_count)
-        ]
-        render_pass.texture_id = texture_ids[0]
-        file.read(render_pass.post_texture_id_count_other)
+
+        if render_pass.post_texture_id_count != 0:
+            texture_ids = [
+                struct.unpack(endianness + 'I', file.read(4))[0] for _ in range(render_pass.post_texture_id_count)
+            ]
+            render_pass.texture_id = texture_ids[0]
+            file.read(render_pass.post_texture_id_count_other)
 
     return Shader(
         name,
@@ -426,11 +428,13 @@ def read_shader_the_sims_2_pets(file: typing.BinaryIO, endianness: str) -> Shade
     for render_pass in render_passes:
         if render_pass.texture_id != 0:
             continue
-        texture_ids = [
-            struct.unpack(endianness + 'I', file.read(4))[0] for _ in range(render_pass.post_texture_id_count)
-        ]
-        render_pass.texture_id = texture_ids[0]
-        file.read(render_pass.post_texture_id_count_other)
+
+        if render_pass.post_texture_id_count != 0:
+            texture_ids = [
+                struct.unpack(endianness + 'I', file.read(4))[0] for _ in range(render_pass.post_texture_id_count)
+            ]
+            render_pass.texture_id = texture_ids[0]
+            file.read(render_pass.post_texture_id_count_other)
 
     return Shader(
         name,
