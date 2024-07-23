@@ -23,7 +23,7 @@ class FloatType(enum.Enum):
 
 def snorm_to_float(input_value: int, scale: float) -> float:
     """Convert snorm to float."""
-    return float(input_value) / (scale - 1.0)
+    return float(input_value) / scale
 
 
 @dataclasses.dataclass
