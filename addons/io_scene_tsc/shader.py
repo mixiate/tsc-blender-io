@@ -389,7 +389,7 @@ def read_shader_the_sims_2_pets(file: typing.BinaryIO, endianness: str) -> Shade
     """Read The Sims 2 Pets shader."""
     version = struct.unpack(endianness + 'I', file.read(4))[0]
     file_id = struct.unpack(endianness + 'I', file.read(4))[0]
-    if version != 0x18 or file_id != 1397245010:
+    if version not in (0x18, 0x19) or file_id != 1397245010:
         raise utils.FileReadError
 
     shader_type = struct.unpack(endianness + 'I', file.read(4))[0]
@@ -461,6 +461,8 @@ def read_file(file_path: pathlib.Path, game_type: utils.GameType, endianness: st
                 case utils.GameType.THESIMS2:
                     shader = read_shader_the_sims_2(file, endianness)
                 case utils.GameType.THESIMS2PETS:
+                    shader = read_shader_the_sims_2_pets(file, endianness)
+                case utils.GameType.THESIMS2CASTAWAY:
                     shader = read_shader_the_sims_2_pets(file, endianness)
 
             if len(file.read(1)) != 0:
