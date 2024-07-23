@@ -97,7 +97,12 @@ def import_shader(
             match game_type:
                 case utils.GameType.THESIMS | utils.GameType.THESIMSBUSTINOUT:
                     has_alpha = render_pass.flags & 0x4 != 0
-                case utils.GameType.THEURBZ | utils.GameType.THESIMS2:
+                case (
+                    utils.GameType.THEURBZ
+                    | utils.GameType.THESIMS2
+                    | utils.GameType.THESIMS2PETS
+                    | utils.GameType.THESIMS2CASTAWAY
+                ):
                     has_alpha = render_pass.raster_modes & 0x40 != 0 or render_pass.flags & 0x4 != 0
                 case _:
                     has_alpha = False
