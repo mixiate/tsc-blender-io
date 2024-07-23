@@ -43,7 +43,7 @@ def create_material(
             texture_file_path.stem + " specular" + texture_file_path.suffix,
         )
         if specular_file_path.is_file():
-            specular_image = bpy.data.images.get(specular_file_path.stem)
+            specular_image = bpy.data.images.get(specular_file_path.name)
             if specular_image is None:
                 specular_image = bpy.data.images.load(specular_file_path.as_posix())
 
