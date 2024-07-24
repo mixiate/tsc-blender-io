@@ -1,12 +1,12 @@
 """The Sims Console Blender IO."""
 
 bl_info = {
-    "name": "The Sims, Bustin' Out, Urbz, 2, Pets, Castaway model format",
+    "name": "Import The Sims, Bustin' Out, Urbz, 2, Pets, Castaway format",
     "description": "Import models from the first generation of The Sims console games.",
     "author": "mix",
     "version": (1, 1, 0),
     "blender": (4, 1, 0),
-    "location": "File > Import-Export",
+    "location": "File > Import",
     "warning": "",
     "doc_url": "https://github.com/mixsims/tsc-blender-io",
     "tracker_url": "https://github.com/mixsims/tsc-blender-io/issues",
@@ -33,9 +33,9 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Import model operator."""
 
     bl_idname: str = "import.model"
-    bl_label: str = "Import The Sims, Bustin' Out, Urbz, 2, Pets, Castaway Model"
+    bl_label: str = "The Sims, Bustin' Out, Urbz, 2, Pets, Castaway"
     bl_description: str = (
-        "Import The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets or The Sims 2 Castaway Model"
+        "The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets or The Sims 2 Castaway Model"
     )
     bl_options: typing.ClassVar[set[str]] = {'UNDO'}
 
