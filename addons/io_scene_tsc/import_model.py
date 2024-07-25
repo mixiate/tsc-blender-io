@@ -51,6 +51,15 @@ def import_model(
     else:
         armature_object = None
 
+    animation_model_id = animation_id_lookup.get_animation_model_id_from_model_id(model_id, model_desc.game)
+
+    is_object, animation_ids = animation_id_lookup.list_animation_ids_from_model_id(
+        file_path.parent.parent / "quickdat" / "SimsObjects",
+        model_desc.game,
+        model_desc.endianness,
+        animation_model_id,
+    )
+
     for object_index, object_desc in enumerate(model_desc.objects):
         object_collection_name = f"{model_desc.name} {object_index}"
 
@@ -147,6 +156,9 @@ def import_model(
                 bpy.ops.object.parent_set(type='ARMATURE')
                 bpy.ops.object.select_all(action='DESELECT')
 
+            elif is_object:
+                obj.scale.x = -obj.scale.x
+
             material = import_shader.import_shader(
                 logger,
                 model_desc.game,
@@ -160,15 +172,6 @@ def import_model(
                 obj.data.materials.append(material)
 
     if armature_object:
-        animation_model_id = animation_id_lookup.get_animation_model_id_from_model_id(model_id, model_desc.game)
-
-        animation_ids = animation_id_lookup.list_animation_ids_from_model_id(
-            file_path.parent.parent / "quickdat" / "SimsObjects",
-            model_desc.game,
-            model_desc.endianness,
-            animation_model_id,
-        )
-
         for animation_id in animation_ids:
             animation_file_path = id_file_path_maps.animations.get().get(animation_id)
             if animation_file_path:
@@ -183,5 +186,8 @@ def import_model(
 
         if armature_object.animation_data is not None and armature_object.animation_data.nla_tracks is not None:
             armature_object.animation_data.action = armature_object.animation_data.nla_tracks[0].strips[0].action
+
+        if is_object:
+            armature_object.scale.x = -armature_object.scale.x
 
     return object_list

@@ -56,15 +56,15 @@ def list_animation_ids_from_model_id(
     game_type: utils.GameType,
     endianness: str,
     model_id: int,
-) -> list[int]:
+) -> tuple[bool, list[int]]:
     """Read animation IDs from a SimsObject file."""
     # bustin' out map
     if game_type == utils.GameType.THESIMSBUSTINOUT and model_id == 0x50AE831:
-        return [0x92D8AE4A, 0x30AA9779, 0x6BCF6EE9]
+        return False, [0x92D8AE4A, 0x30AA9779, 0x6BCF6EE9]
 
     # urbz map
     if game_type == utils.GameType.THEURBZ and model_id == 0x95B8888F:
-        return [0x95B8888F]
+        return False, [0x95B8888F]
 
     # urbz load
     if game_type == utils.GameType.THEURBZ and model_id in (
@@ -81,7 +81,7 @@ def list_animation_ids_from_model_id(
         0xF4BCC11A,
         0xFD7F6441,
     ):
-        return [0x24C58257]
+        return False, [0x24C58257]
 
     match game_type:
         case utils.GameType.THESIMS:
@@ -96,11 +96,17 @@ def list_animation_ids_from_model_id(
         case utils.GameType.THESIMS2:
             start_position = 982304
             end_position = 1040972
-        case _:
-            return []
+        case utils.GameType.THESIMS2PETS:
+            start_position = 1125464
+            end_position = 1197748
+        case utils.GameType.THESIMS2CASTAWAY:
+            start_position = 886652
+            end_position = 946662
 
     try:
         with sims_objects_file_path.open(mode='rb') as file:
+            found = False
+
             file.seek(start_position)
             while True:
                 if file.tell() > end_position:
@@ -108,6 +114,7 @@ def list_animation_ids_from_model_id(
                 if struct.unpack(endianness + 'I', file.read(4))[0] != model_id:
                     file.seek(file.tell() - 3)
                 else:
+                    found = True
                     file.seek(file.tell() - 8)
                     break
 
@@ -116,7 +123,7 @@ def list_animation_ids_from_model_id(
             animation_ids = [read_animation_id(file, game_type, endianness) for _ in range(count)]
             animation_ids = [x for x in animation_ids if x is not None]
 
-            return list(dict.fromkeys(animation_ids))
+            return found, list(dict.fromkeys(animation_ids))
 
     except (OSError, struct.error) as _:
-        return []
+        return False, []
