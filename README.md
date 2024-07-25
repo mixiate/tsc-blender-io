@@ -34,10 +34,10 @@ Blender 4.1.1 and 4.2 are supported.
 
 ### Known Issues
 - Models will probably need to be cleaned up in some way for use elsewhere. There is an option to do this for you when importing. It will merge vertices and try to reconstruct sharp edges from the normals. You may want to do this manually for best results. Clear the custom split normals data if you want to redo them.
-- Object models need to be flipped on the X axis. Sim parts, lots and other misc models do not need to be flipped.
-- Some models from The Sims 2, The Sims 2 Pets and The Sims 2 Castaway are imported with incorrect normals.
+- Object models are flipped on the X axis by setting their objects or armature scale to -1. You may need to account for this depending on what you are doing with them.
+- Some objects from The Sims 2, Pets and Castaway have their normals flipped on the X axis. There is an option when importing to correct this.
 - Some animal face parts from The Sims 2 Pets do not import.
-- Game materials are not fully imported. Only the main texture is used.
+- Materials are not fully imported. Only the main texture is used.
 - Some character skeletons are imported incorrectly.
 - Animation keyframes are imported as is. The games have their own way of blending keyframes that is not recreated, so animations are not totally accurate.
 - Animations from The Urbz have a lot of issues but are mostly correct.
