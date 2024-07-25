@@ -24,6 +24,7 @@ def import_model(
     id_file_path_maps: id_file_path_map.IDFilePathMaps,
     *,
     import_animations: bool,
+    flip_normals_x_axis: bool,
 ) -> list[bpy.types.Object]:
     """Import a model file."""
     model_desc = model.read_file(file_path)
@@ -138,6 +139,10 @@ def import_model(
             b_mesh.free()
 
             if len(mesh_desc.normals) > 0:
+                if is_object and flip_normals_x_axis:
+                    for normal in mesh_desc.normals:
+                        normal[0] = -normal[0]
+
                 mesh.normals_split_custom_set_from_vertices(mesh_desc.normals)
 
                 for polygon in mesh.polygons:

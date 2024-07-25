@@ -59,6 +59,12 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default=True,
     )
 
+    flip_normals_x_axis: bpy.props.BoolProperty(  # type: ignore[valid-type]
+        name="Flip Normals On the X Axis",
+        description="Flip the normals on the x axis. This is needed for some models from The Sims 2 + games",
+        default=False,
+    )
+
     cleanup_meshes: bpy.props.BoolProperty(  # type: ignore[valid-type]
         name="Cleanup Meshes (Lossy)",
         description="Merge the vertices of the mesh, add sharp edges, remove original normals and shade smooth",
@@ -85,6 +91,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             logger,
             paths,
             import_animations=self.import_animations,
+            flip_normals_x_axis=self.flip_normals_x_axis,
             cleanup_meshes=self.cleanup_meshes,
         )
 
@@ -98,6 +105,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """Draw the import options ui."""
         col = self.layout.column()
         col.prop(self, "import_animations")
+        col.prop(self, "flip_normals_x_axis")
         col.prop(self, "cleanup_meshes")
 
 

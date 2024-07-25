@@ -17,6 +17,7 @@ def import_files(
     file_paths: list[pathlib.Path],
     *,
     import_animations: bool,
+    flip_normals_x_axis: bool,
     cleanup_meshes: bool,
 ) -> None:
     """Import all the models in the selected files."""
@@ -43,6 +44,7 @@ def import_files(
                 file_path,
                 id_file_path_maps,
                 import_animations=import_animations,
+                flip_normals_x_axis=flip_normals_x_axis,
             )
         except utils.FileReadError as _:  # noqa: PERF203
             if context.view_layer.objects.active is not None and context.view_layer.objects.active.type == 'ARMATURE':
