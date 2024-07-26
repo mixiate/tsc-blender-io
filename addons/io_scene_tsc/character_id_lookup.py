@@ -12,8 +12,23 @@ THE_SIMS_MODEL_ID_CHARACTER_ID_MAP = {
     0xF96953D1: 0x9CC7775E,  # halogen_heaven_lamp_by_contempto_a_00
     0x1274B029: 0x3A5EE732,  # hydrothera_bathtub_a_00
     0x9AEE727: 0xCD98A854,  # master_suite_tub_a_00
+    0x20522B4D: 0xFFA60350,  # npc_firefighter
+    0xF1EB2CB0: 0x1FB80AF4,  # npc_gardener
+    0x343B33C9: 0xFFA60350,  # npc_handyman
+    0x143D00B: 0x1FB80AF4,  # npc_maid
+    0xF5E90202: 0x1FB80AF4,  # npc_mail-carrier
+    0x61E966D0: 0xFFA60350,  # npc_monkey_butler
+    0x5448AADE: 0xD5E79699,  # npc_papergirl
+    0x4BB2936F: 0xFFA60350,  # npc_pizza_guy
+    0x3B4593AD: 0x1FB80AF4,  # npc_police-officer
+    0xF50EA6F6: 0xFFA60350,  # npc_reaper
+    0x2D4B3344: 0xFFA60350,  # npc_repoman
+    0xD0B16A91: 0x1FB80AF4,  # npc_social_worker
+    0xD38D1A48: 0xFFA60350,  # npc_thief
     0xCA88340B: 0xA2B792A8,  # oval_glass_sconce_a_00
     0x1DCC5C48: 0x85AFAB17,  # sani_queen_bathtub_a_00
+    0xE15DB6F4: 0x38EB076E,  # thiefCAS_getIn
+    0x21995ECE: 0x6264D711,  # thiefCAS_vaseSneak
     0x9CD3E29: 0x5E9076EB,  # top_brass_sconce_a_00
     0x24F1E2A2: 0x3E88D019,  # torchosterone_floor_lamp_a_00
     0xC890DFE1: 0x58A25BF4,  # torchosterone_table_lamp_a_00
