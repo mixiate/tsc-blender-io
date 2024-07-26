@@ -105,25 +105,20 @@ def list_animation_ids_from_model_id(
 
     try:
         with sims_objects_file_path.open(mode='rb') as file:
-            found = False
-
             file.seek(start_position)
-            while True:
-                if file.tell() > end_position:
-                    break
-                if struct.unpack(endianness + 'I', file.read(4))[0] != model_id:
-                    file.seek(file.tell() - 3)
-                else:
-                    found = True
-                    file.seek(file.tell() - 8)
-                    break
+            data = file.read(end_position - start_position)
 
-            count = struct.unpack(endianness + 'I', file.read(4))[0]
+            position = data.find(struct.pack(endianness + 'I', model_id))
+            if position != -1:
+                file.seek((start_position + position) - 4)
+                count = struct.unpack(endianness + 'I', file.read(4))[0]
 
-            animation_ids = [read_animation_id(file, game_type, endianness) for _ in range(count)]
-            animation_ids = [x for x in animation_ids if x is not None]
+                animation_ids = [read_animation_id(file, game_type, endianness) for _ in range(count)]
+                animation_ids = [x for x in animation_ids if x is not None]
 
-            return found, list(dict.fromkeys(animation_ids))
+                return True, list(dict.fromkeys(animation_ids))
+
+            return False, []
 
     except (OSError, struct.error) as _:
         return False, []
