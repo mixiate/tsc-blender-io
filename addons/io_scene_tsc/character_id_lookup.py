@@ -110,6 +110,8 @@ THE_URBZ_MODEL_ID_CHARACTER_ID_MAP = {
     0x93A0F0C9: 0xFFA60350,  # npc_jj_helper
     0x53BBF6CD: 0xFFA60350,  # npc_mopoe
     0xF50EA6F6: 0xFFA60350,  # NPC_Reaper
+    0xE15DB6F4: 0x38EB076E,  # thiefCAS_getIn
+    0x21995ECE: 0x6264D711,  # thiefCAS_vaseSneak
 }
 
 
