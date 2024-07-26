@@ -11,6 +11,9 @@ import typing
 from . import utils
 
 
+from .utils import GameType
+
+
 FILE_MAGIC_ID = 1297040460
 
 
@@ -125,7 +128,7 @@ MESH_FLAGS_HAS_INDICES = 0b0010_0000
 MESH_FLAGS_HAS_UVS_2 = 0b0100_0000
 
 
-def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scale: float) -> Mesh:
+def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: float) -> Mesh:
     """Read mesh."""
     flags = struct.unpack(endianness + 'I', file.read(4))[0]
 
@@ -134,15 +137,10 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
     strip_count = struct.unpack(endianness + 'I', file.read(4))[0]
     file.read(strip_count)
 
-    if game in (
-        utils.GameType.THESIMSBUSTINOUT,
-        utils.GameType.THEURBZ,
-        utils.GameType.THESIMS2,
-        utils.GameType.THESIMS2PETS,
-    ):
+    if game in (GameType.THESIMSBUSTINOUT, GameType.THEURBZ, GameType.THESIMS2, GameType.THESIMS2PETS):
         file.read(4)
 
-    if game == utils.GameType.THESIMS2CASTAWAY:
+    if game == GameType.THESIMS2CASTAWAY:
         file.read(52)
 
     float_type = FloatType.SNORM16 if flags & MESH_FLAGS_HAS_SNORM_FLOATS else FloatType.FLOAT32
@@ -208,7 +206,7 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
         if flags & MESH_FLAGS_HAS_NORMALS:
             normal_format, normal_size = (
                 (endianness + '4b', 4)
-                if game in (utils.GameType.THESIMS2, utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY)
+                if game in (GameType.THESIMS2, GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY)
                 else (endianness + '3b', 3)
             )
             normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
@@ -223,7 +221,7 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
                 normals.append(normal)
 
         if flags & MESH_FLAGS_HAS_INDICES:
-            if game in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+            if game in (GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY):
                 file.read(4)
                 file.read(1)
 
@@ -242,7 +240,7 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
 
                 file.seek(start_pos + indices_length + 8)
 
-                if game == utils.GameType.THESIMS2CASTAWAY:
+                if game == GameType.THESIMS2CASTAWAY:
                     file.read(index_count * 2)
 
             else:
@@ -275,17 +273,17 @@ def read_mesh(file: typing.BinaryIO, game: utils.GameType, endianness: str, scal
 
 
 @dataclasses.dataclass
-class Object:
-    """Object."""
+class SubModel:
+    """SubModel."""
 
     meshes: list[Mesh]
 
 
-def read_object(file: typing.BinaryIO, game: utils.GameType, endianness: str, scale: float) -> Object:
-    """Read Object."""
+def read_sub_model(file: typing.BinaryIO, game: GameType, endianness: str, scale: float) -> SubModel:
+    """Read SubModel."""
     file.read(4)
 
-    if game == utils.GameType.THESIMS2CASTAWAY:
+    if game == GameType.THESIMS2CASTAWAY:
         unknown_count = struct.unpack(endianness + 'I', file.read(4))[0]
         for _ in range(unknown_count):
             if len(file.read(7 * 4)) == 0:
@@ -301,221 +299,62 @@ def read_object(file: typing.BinaryIO, game: utils.GameType, endianness: str, sc
         if marker != 6:
             file.read(1)
 
-    return Object(meshes)
+    return SubModel(meshes)
 
 
-def read_header_unknowns(file: typing.BinaryIO, endianness: str) -> None:
-    """Read Model header unknowns."""
-    unknown_count_1 = struct.unpack(endianness + 'I', file.read(4))[0]
-    if unknown_count_1 > 0:
-        while True:
-            if struct.unpack(endianness + 'I', file.read(4))[0] != 0xFFFFFFFF:
-                file.seek(file.tell() - 3)
-            else:
-                file.seek(file.tell() - 12)
-                break
-    else:
-        unknown_count_2 = struct.unpack(endianness + 'I', file.read(4))[0]
-        for _ in range(unknown_count_2):
-            if len(file.read(156)) == 0:
-                raise utils.FileReadError
+def read_unknowns(file: typing.BinaryIO, endianness: str) -> None:
+    """Read unknowns."""
+    count = struct.unpack(endianness + 'I', file.read(4))[0]
 
-        unknown_count_3 = struct.unpack(endianness + 'I', file.read(4))[0]
-        for _ in range(unknown_count_3):
-            if len(file.read(172)) == 0:
-                raise utils.FileReadError
+    for _ in range(count):
+        if len(file.read(64)) != 64:
+            raise utils.FileReadError
 
-        unknown_count_4 = struct.unpack(endianness + 'I', file.read(4))[0]
-        for _ in range(unknown_count_4):
-            if len(file.read(28)) == 0:
-                raise utils.FileReadError
 
-        file.read(1)
+def read_bspline_volumes(file: typing.BinaryIO, endianness: str) -> None:
+    """Read bspline volumes."""
+    count = struct.unpack(endianness + 'I', file.read(4))[0]
 
+    for _ in range(count):
+        file.read(4)
+        file.read(128)
+        file.read(4)
 
-def read_the_sims_model(file: typing.BinaryIO, endianness: str) -> Object:
-    """Read The Sims Model."""
-    file.read(2)
+        count_1 = struct.unpack(endianness + 'I', file.read(4))[0]
+        count_2 = struct.unpack(endianness + 'I', file.read(4))[0]
+        count_3 = struct.unpack(endianness + 'I', file.read(4))[0]
+        count_4 = struct.unpack(endianness + 'I', file.read(4))[0]
 
-    name = utils.read_null_terminated_string(file)
+        data_length = 12 * count_1 * count_2 * count_3 * count_4
+        if len(file.read(data_length)) != data_length:
+            raise utils.FileReadError
 
-    file.read(1)
 
-    scale = 1.0 / struct.unpack(endianness + 'f', file.read(4))[0]
+def read_dummies(file: typing.BinaryIO, endianness: str) -> None:
+    """Read dummies."""
+    count = struct.unpack(endianness + 'I', file.read(4))[0]
 
-    object_count = struct.unpack(endianness + 'I', file.read(4))[0]
+    for _ in range(count):
+        if len(file.read(156)) != 156:
+            raise utils.FileReadError
 
-    objects = [read_object(file, utils.GameType.THESIMS, endianness, scale) for _ in range(object_count)]
 
-    file.read(64)
-    file.read(8)
+def read_cameras(file: typing.BinaryIO, endianness: str) -> None:
+    """Read cameras."""
+    count = struct.unpack(endianness + 'I', file.read(4))[0]
 
-    return Model(
-        name,
-        objects,
-        utils.GameType.THESIMS,
-        endianness,
-    )
+    for _ in range(count):
+        if len(file.read(172)) != 172:
+            raise utils.FileReadError
 
 
-def read_the_sims_bustin_out_model(file: typing.BinaryIO, endianness: str) -> Object:
-    """Read The Sims Bustin' Out Model."""
-    file.read(2)
+def read_light_infos(file: typing.BinaryIO, endianness: str) -> None:
+    """Read light infos."""
+    count = struct.unpack(endianness + 'I', file.read(4))[0]
 
-    name = utils.read_null_terminated_string(file)
-
-    file.read(16)
-    unknown_count = struct.unpack(endianness + 'I', file.read(4))[0]
-    for _ in range(unknown_count):
-        file.read(28)
-
-    file.read(1)
-
-    scale = 1.0 / struct.unpack(endianness + 'f', file.read(4))[0]
-
-    object_count = struct.unpack(endianness + 'I', file.read(4))[0]
-
-    objects = [read_object(file, utils.GameType.THESIMSBUSTINOUT, endianness, scale) for _ in range(object_count)]
-
-    file.read(64)
-    file.read(8)
-
-    return Model(
-        name,
-        objects,
-        utils.GameType.THESIMSBUSTINOUT,
-        endianness,
-    )
-
-
-def read_the_urbz_model(file: typing.BinaryIO, endianness: str) -> Object:
-    """Read The Urbz Model."""
-    file.read(16)
-
-    name = utils.read_null_terminated_string(file)
-
-    file.read(4)
-    file.read(53)
-
-    read_header_unknowns(file, endianness)
-
-    scale = 1.0 / struct.unpack(endianness + 'f', file.read(4))[0]
-
-    object_count = struct.unpack(endianness + 'I', file.read(4))[0]
-
-    objects = [read_object(file, utils.GameType.THEURBZ, endianness, scale) for _ in range(object_count)]
-
-    file.read(64)
-    file.read(8)
-
-    return Model(
-        name,
-        objects,
-        utils.GameType.THEURBZ,
-        endianness,
-    )
-
-
-def read_the_sims_2_model(file: typing.BinaryIO, endianness: str) -> Object:
-    """Read The Sims 2 Model."""
-    if struct.unpack(endianness + 'I', file.read(4))[0] != FILE_MAGIC_ID:
-        raise utils.FileReadError
-
-    if struct.unpack(endianness + 'i', file.read(4))[0] != -1:
-        raise utils.FileReadError
-
-    name_length = struct.unpack(endianness + 'I', file.read(4))[0]
-    name = file.read(name_length - 1).decode('ascii')
-    file.read(1)
-
-    file.read(4)
-    file.read(57)
-
-    read_header_unknowns(file, endianness)
-
-    scale = 1.0 / struct.unpack(endianness + 'f', file.read(4))[0]
-
-    object_count = struct.unpack(endianness + 'I', file.read(4))[0]
-
-    objects = [read_object(file, utils.GameType.THESIMS2, endianness, scale) for _ in range(object_count)]
-
-    file.read(64)
-    file.read(8)
-
-    return Model(
-        name,
-        objects,
-        utils.GameType.THESIMS2,
-        endianness,
-    )
-
-
-def read_the_sims_2_pets_model(file: typing.BinaryIO, endianness: str) -> Object:
-    """Read The Sims 2 Pets Model."""
-    if struct.unpack(endianness + 'I', file.read(4))[0] != FILE_MAGIC_ID:
-        raise utils.FileReadError
-
-    if struct.unpack(endianness + 'i', file.read(4))[0] != -1:
-        raise utils.FileReadError
-
-    name_length = struct.unpack(endianness + 'I', file.read(4))[0]
-    name = file.read(name_length - 1).decode('ascii')
-    file.read(1)
-
-    file.read(4)
-    file.read(57)
-
-    read_header_unknowns(file, endianness)
-
-    scale = 1.0 / struct.unpack(endianness + 'f', file.read(4))[0]
-
-    object_count = struct.unpack(endianness + 'I', file.read(4))[0]
-
-    objects = [read_object(file, utils.GameType.THESIMS2PETS, endianness, scale) for _ in range(object_count)]
-
-    file.read(64)
-    file.read(4)
-
-    return Model(
-        name,
-        objects,
-        utils.GameType.THESIMS2PETS,
-        endianness,
-    )
-
-
-def read_the_sims_2_castaway_model(file: typing.BinaryIO, endianness: str) -> Object:
-    """Read The Sims 2 Castaway Model."""
-    if struct.unpack(endianness + 'I', file.read(4))[0] != FILE_MAGIC_ID:
-        raise utils.FileReadError
-
-    if struct.unpack(endianness + 'i', file.read(4))[0] != -1:
-        raise utils.FileReadError
-
-    name_length = struct.unpack(endianness + 'I', file.read(4))[0]
-    name = file.read(name_length - 1).decode('ascii')
-    file.read(1)
-
-    file.read(4)
-    file.read(57)
-
-    read_header_unknowns(file, endianness)
-
-    scale = 1.0 / struct.unpack(endianness + 'f', file.read(4))[0]
-
-    object_count = struct.unpack(endianness + 'I', file.read(4))[0]
-
-    objects = [read_object(file, utils.GameType.THESIMS2CASTAWAY, endianness, scale) for _ in range(object_count)]
-
-    file.read(64)
-    file.read(8)
-
-    return Model(
-        name,
-        objects,
-        utils.GameType.THESIMS2CASTAWAY,
-        endianness,
-    )
+    for _ in range(count):
+        if len(file.read(28)) != 28:
+            raise utils.FileReadError
 
 
 @dataclasses.dataclass
@@ -523,36 +362,93 @@ class Model:
     """Model."""
 
     name: str
-    objects: list[Object]
-    game: utils.GameType
+    sub_models: list[SubModel]
+    game: GameType
     endianness: str
 
 
-def read_model(file: typing.BinaryIO) -> Model:  # noqa: PLR0911
-    """Read Model."""
+def read_model(file: typing.BinaryIO) -> Model:
+    """Read a model."""
     match struct.unpack('<I', file.read(4))[0]:
         case 0x00:
-            return read_the_sims_model(file, '<')
-
+            endianness, game_type = '<', GameType.THESIMS
         case 0x01:
-            return read_the_sims_bustin_out_model(file, '<')
-
+            endianness, game_type = '<', GameType.THESIMSBUSTINOUT
         case 0x35:
-            return read_the_urbz_model(file, '<')
-
+            endianness, game_type = '<', GameType.THEURBZ
         case 0x3A:
-            return read_the_sims_2_model(file, '<')
-
+            endianness, game_type = '<', GameType.THESIMS2
         case 0x3E:
-            return read_the_sims_2_pets_model(file, '<')
-
+            endianness, game_type = '<', GameType.THESIMS2PETS
         case 0x3E000000:
-            return read_the_sims_2_pets_model(file, '>')
-
+            endianness, game_type = '>', GameType.THESIMS2PETS
         case 0x45000000:
-            return read_the_sims_2_castaway_model(file, '>')
+            endianness, game_type = '>', GameType.THESIMS2CASTAWAY
+        case _:
+            raise utils.FileReadError
 
-    raise utils.FileReadError
+    match game_type:
+        case GameType.THESIMS | GameType.THESIMSBUSTINOUT:
+            file.read(2)
+        case GameType.THEURBZ:
+            file.read(16)
+        case GameType.THESIMS2 | GameType.THESIMS2PETS | GameType.THESIMS2CASTAWAY:
+            if struct.unpack(endianness + 'I', file.read(4))[0] != FILE_MAGIC_ID:
+                raise utils.FileReadError
+
+            if struct.unpack(endianness + 'i', file.read(4))[0] != -1:
+                raise utils.FileReadError
+
+            file.read(4)  # name length
+
+    name = utils.read_null_terminated_string(file)
+
+    match game_type:
+        case GameType.THESIMSBUSTINOUT:
+            file.read(16)
+        case GameType.THEURBZ:
+            file.read(53)
+        case GameType.THESIMS2 | GameType.THESIMS2PETS | GameType.THESIMS2CASTAWAY:
+            file.read(57)
+
+    match game_type:
+        case GameType.THESIMSBUSTINOUT:
+            read_light_infos(file, endianness)
+        case GameType.THEURBZ | GameType.THESIMS2 | GameType.THESIMS2PETS | GameType.THESIMS2CASTAWAY:
+            read_unknowns(file, endianness)
+            read_bspline_volumes(file, endianness)
+            read_dummies(file, endianness)
+            read_cameras(file, endianness)
+            read_light_infos(file, endianness)
+
+    file.read(1)
+
+    scale = 1.0 / struct.unpack(endianness + 'f', file.read(4))[0]
+
+    sub_model_count = struct.unpack(endianness + 'I', file.read(4))[0]
+
+    sub_models = [read_sub_model(file, game_type, endianness, scale) for _ in range(sub_model_count)]
+
+    if len(file.read(64)) != 64:
+        raise utils.FileReadError
+
+    match game_type:
+        case GameType.THESIMS | GameType.THESIMSBUSTINOUT | GameType.THEURBZ:
+            footer_length = 8
+        case GameType.THESIMS2 | GameType.THESIMS2PETS:
+            footer_length = 4
+        case GameType.THESIMS2CASTAWAY:
+            footer_length = 7
+
+    if len(file.read(footer_length)) != footer_length:
+        raise utils.FileReadError
+
+    return Model(
+        name,
+        sub_models,
+        game_type,
+        endianness,
+    )
 
 
 def read_file(file_path: pathlib.Path) -> Model:

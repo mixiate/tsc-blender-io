@@ -61,23 +61,23 @@ def import_model(
         animation_model_id,
     )
 
-    for object_index, object_desc in enumerate(model_desc.objects):
-        object_collection_name = f"{model_desc.name} {object_index}"
+    for sub_model_index, sub_model in enumerate(model_desc.sub_models):
+        sub_model_collection_name = f"{model_desc.name} {sub_model_index}"
 
-        object_collection = bpy.data.collections.new(object_collection_name)
+        sub_model_collection = bpy.data.collections.new(sub_model_collection_name)
 
-        if object_collection.name not in file_collection.children:
-            file_collection.children.link(object_collection)
+        if sub_model_collection.name not in file_collection.children:
+            file_collection.children.link(sub_model_collection)
 
-        for mesh_index, mesh_desc in enumerate(object_desc.meshes):
-            mesh_name = f"{model_desc.name} {object_index} {mesh_index}"
+        for mesh_index, mesh_desc in enumerate(sub_model.meshes):
+            mesh_name = f"{model_desc.name} {sub_model_index} {mesh_index}"
 
             mesh = bpy.data.meshes.new(mesh_name)
             obj = bpy.data.objects.new(mesh_name, mesh)
 
             object_list.append(obj)
 
-            object_collection.objects.link(obj)
+            sub_model_collection.objects.link(obj)
 
             b_mesh = bmesh.new()
 

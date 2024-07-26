@@ -59,7 +59,6 @@ def import_files(
                 continue
 
             logger.info(f"Could not import {file_path} as model or animation")  # noqa: G004
-            return
 
     if cleanup_meshes:
         previous_active_object = context.view_layer.objects.active
