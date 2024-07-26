@@ -49,10 +49,33 @@ THE_SIMS_BUSTIN_OUT_MODEL_ID_CHARACTER_ID_MAP = {
     0x9D84F77C: 0x911367DE,  # lamp_garden_streetlamp_industrial_off
     0x7515D4F0: 0x9414BD62,  # lamp_table_x_gooseneck_widehead_off
     0x9AEE727: 0xCD98A854,  # master_suite_tub_a_00
+    0x992EEB73: 0x1FB80AF4,  # npc_catwoman
+    0x20522B4D: 0xFFA60350,  # npc_firefighter
+    0xF1EB2CB0: 0x1FB80AF4,  # npc_gardener
+    0x343B33C9: 0xFFA60350,  # npc_handyman
+    0xC75A4003: 0xFFA60350,  # npc_j_firefighter
+    0x646A66FE: 0x1FB80AF4,  # npc_j_mail_carrier
+    0xC29986A4: 0xD5E79699,  # npc_j_papergirl
+    0xC99309DE: 0x1FB80AF4,  # npc_j_police_officer
+    0xA494A3EC: 0xFFA60350,  # npc_j_repoman
+    0x642B57C2: 0x1FB80AF4,  # npc_j_social_worker
+    0x143D00B: 0x1FB80AF4,  # npc_maid
+    0xF5E90202: 0x1FB80AF4,  # npc_mail-carrier
+    0x61E966D0: 0xFFA60350,  # npc_monkey_butler
+    0x5448AADE: 0xD5E79699,  # npc_papergirl
+    0x4BB2936F: 0xFFA60350,  # npc_pizza_guy
+    0x3B4593AD: 0x1FB80AF4,  # npc_police-officer
+    0xF50EA6F6: 0xFFA60350,  # npc_reaper
+    0x2D4B3344: 0xFFA60350,  # npc_repoman
+    0x9743835: 0xFFA60350,  # npc_servant_robot
+    0xD0B16A91: 0x1FB80AF4,  # npc_social_worker
+    0xD38D1A48: 0xFFA60350,  # npc_thief
     0xB1BE609A: 0x148FF674,  # o_lamp_wall_torch_arm_00
     0xCA88340B: 0xA2B792A8,  # oval_glass_sconce_a_00
     0x42D0B2AD: 0xB9665E3,  # pool_lshape
     0x1DCC5C48: 0x85AFAB17,  # sani_queen_bathtub_a_00
+    0xE15DB6F4: 0x38EB076E,  # thiefCAS_getIn
+    0x21995ECE: 0x6264D711,  # thiefCAS_vaseSneak
     0x9CD3E29: 0x5E9076EB,  # top_brass_sconce_a_00
     0x24F1E2A2: 0x3E88D019,  # torchosterone_floor_lamp_a_00
     0xC890DFE1: 0x58A25BF4,  # torchosterone_table_lamp_a_00
