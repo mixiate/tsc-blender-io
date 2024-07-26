@@ -116,7 +116,22 @@ THE_URBZ_MODEL_ID_CHARACTER_ID_MAP = {
 
 
 THE_SIMS_2_MODEL_ID_CHARACTER_ID_MAP = {
+    0xA6072DE8: 0x25BCAA65,  # bed_double_romantic_left_on
+    0xF2912BED: 0x25BCAA65,  # bed_double_romantic_left_strobe
+    0xFFF01B06: 0xF14AF22C,  # bed_double_romantic_right_on
+    0xAD9D1AEE: 0xF14AF22C,  # bed_double_romantic_right_strobe
     0xFCDCC7AA: 0xDDA1A5D3,  # dm_bulldog
+    0x51C0756: 0xFFA60350,  # npc_captain_catastrophe
+    0x992EEB73: 0x1FB80AF4,  # NPC_catwoman
+    0x1B0F1BFC: 0xFFA60350,  # npc_chinese_food_deliveryman
+    0x67BDD567: 0xFFA60350,  # NPC_cop
+    0xB99FA3F9: 0xFFA60350,  # npc_darius
+    0x20522B4D: 0xFFA60350,  # NPC_Firefighter
+    0x1848BC46: 0xFFA60350,  # npc_harry_the_hustler
+    0xE7AC3CB4: 0x1FB80AF4,  # npc_hot_topic_girl
+    0x93A0F0C9: 0xFFA60350,  # npc_jj_helper
+    0x53BBF6CD: 0xFFA60350,  # npc_mopoe
+    0xF50EA6F6: 0xFFA60350,  # NPC_Reaper
     0x6BF6C17F: 0xF2FF90C5,  # o_painting_eyetoy_2
     0x1CF1F1E9: 0xF2FF90C5,  # o_painting_eyetoy_3
     0x8295644A: 0xF2FF90C5,  # o_painting_eyetoy_4
@@ -129,12 +144,21 @@ THE_SIMS_2_MODEL_ID_CHARACTER_ID_MAP = {
     0xD6DB17A4: 0x38D57688,  # o_poster_eyetoy_3
     0x48BF8207: 0x38D57688,  # o_poster_eyetoy_4
     0x3FB8B291: 0x38D57688,  # o_poster_eyetoy_5
-    0x82FAC10A: 0xFA1581E6,  # plumbing_bathtub_ornate_2x1
-    0x14D1270F: 0xFA1581E6,  # plumbing_bathtub_ornate_2x1_empty_clean
-    0x84ACF84F: 0xFA1581E6,  # plumbing_bathtub_ornate_new
-    0x28261DF3: 0xFA1581E6,  # plumbing_bathtub_ornate_new_empty_clean
+    0x14D1270F: 0x82FAC10A,  # plumbing_bathtub_ornate_2x1_empty_clean
+    0x28261DF3: 0x84ACF84F,  # plumbing_bathtub_ornate_new_empty_clean
     0x1A8C4249: 0x94D1D6CA,  # plumbing_hottub_antigrav_doliphin
     0xEC5384BD: 0x94D1D6CA,  # plumbing_hottub_antigrav_waterblob
+    0x3E12709F: 0x7D41985A,  # plumbing_toilet_ornate_copper
+    0x445A2155: 0x1FB80AF4,  # snpc_cop
+    0xFAAB1F69: 0x1FB80AF4,  # snpc_firefighter
+    0x761CE37: 0xFFA60350,  # snpc_gardner
+    0xC9B7667F: 0x1FB80AF4,  # snpc_maid
+    0x3BE3817: 0xFFA60350,  # snpc_mailman
+    0xD0B6308D: 0x1FB80AF4,  # snpc_maintenanceman
+    0x9E35E02B: 0xFFA60350,  # snpc_paperboy
+    0x9C5FC449: 0xFFA60350,  # snpc_reaper
+    0x76FCCC3B: 0xFFA60350,  # snpc_repoman
+    0x842D5BDB: 0xFFA60350,  # snpc_thief
 }
 
 

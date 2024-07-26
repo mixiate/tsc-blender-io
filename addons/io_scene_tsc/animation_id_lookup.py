@@ -9,19 +9,23 @@ from . import utils
 
 
 SIMS_2_MODEL_ID_ANIMATION_MODEL_ID_LOOKUP = {
-    0x1A8C4249: 0xEC5384BD,
-    0x1CF1F1E9: 0xF2FF90C5,
-    0x3FB8B291: 0x38D57688,
-    0x48BF8207: 0x38D57688,
-    0x6143FD5: 0x9F1D6E6F,
-    0x6BF6C17F: 0xF2FF90C5,
-    0x71130F43: 0x9F1D6E6F,
-    0x8295644A: 0xF2FF90C5,
-    0x9870AA76: 0x9F1D6E6F,
-    0xA1DC2732: 0x38D57688,
-    0xD6DB17A4: 0x38D57688,
-    0xEF779AE0: 0x9F1D6E6F,
-    0xF59254DC: 0xF2FF90C5,
+    0xA6072DE8: 0x25BCAA65,  # bed_double_romantic_left_on
+    0xF2912BED: 0x25BCAA65,  # bed_double_romantic_left_strobe
+    0xFFF01B06: 0xF14AF22C,  # bed_double_romantic_right_on
+    0xAD9D1AEE: 0xF14AF22C,  # bed_double_romantic_right_strobe
+    0x6BF6C17F: 0xF2FF90C5,  # o_painting_eyetoy_2
+    0x1CF1F1E9: 0xF2FF90C5,  # o_painting_eyetoy_3
+    0x8295644A: 0xF2FF90C5,  # o_painting_eyetoy_4
+    0xF59254DC: 0xF2FF90C5,  # o_painting_eyetoy_5
+    0x6143FD5: 0x9F1D6E6F,  # o_painting_landscape_eyetoy_2
+    0x71130F43: 0x9F1D6E6F,  # o_painting_landscape_eyetoy_3
+    0xEF779AE0: 0x9F1D6E6F,  # o_painting_landscape_eyetoy_4
+    0x9870AA76: 0x9F1D6E6F,  # o_painting_landscape_eyetoy_5
+    0xA1DC2732: 0x38D57688,  # o_poster_eyetoy_2
+    0xD6DB17A4: 0x38D57688,  # o_poster_eyetoy_3
+    0x48BF8207: 0x38D57688,  # o_poster_eyetoy_4
+    0x3FB8B291: 0x38D57688,  # o_poster_eyetoy_5
+    0x1A8C4249: 0xEC5384BD,  # plumbing_hottub_antigrav_doliphin
 }
 
 
