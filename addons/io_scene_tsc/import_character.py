@@ -36,6 +36,14 @@ def import_character(
         logger.info(f"Could not load character {character_file_path}")  # noqa: G004
         return None
 
+    if (
+        model_name.startswith(("fa_", "af_", "ma_", "am_", "fc_", "cf_", "mc_", "cm_"))
+        and context.view_layer.objects.active is not None
+        and context.view_layer.objects.active.type == 'ARMATURE'
+        and [x.name for x in char_desc.bones] == [x.name for x in context.view_layer.objects.active.data.bones]
+    ):
+        return context.view_layer.objects.active
+
     armature = bpy.data.armatures.new(name=char_desc.name)
     armature_object = bpy.data.objects.new(name=char_desc.name, object_data=armature)
 
