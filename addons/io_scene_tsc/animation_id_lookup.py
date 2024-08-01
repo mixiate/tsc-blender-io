@@ -55,7 +55,7 @@ def read_animation_id(file: typing.BinaryIO, game_type: utils.GameType, endianne
     return None
 
 
-def list_animation_ids_from_model_id(
+def list_animation_ids_from_model_id(  # noqa: PLR0911
     sims_objects_file_path: pathlib.Path,
     game_type: utils.GameType,
     endianness: str,
@@ -86,6 +86,60 @@ def list_animation_ids_from_model_id(
         0xFD7F6441,
     ):
         return False, [0x24C58257]
+
+    # car_art
+    if game_type in (utils.GameType.THESIMS2, utils.GameType.THESIMS2PETS) and model_id == 0x68E5A7C0:
+        return True, [
+            2870579338,
+            3368578829,
+            1841723802,
+            2770164402,
+        ]
+
+    # car_athlete
+    if game_type in (utils.GameType.THESIMS2, utils.GameType.THESIMS2PETS) and model_id == 0xE7E58843:
+        return True, [
+            719204493,
+            1225772810,
+            4079168409,
+            3702231142,
+        ]
+
+    # car_business
+    if game_type in (utils.GameType.THESIMS2, utils.GameType.THESIMS2PETS) and model_id == 0x9026908F:
+        return True, [
+            547241880,
+            1129299999,
+            2666827645,
+            2617942760,
+        ]
+
+    # car_film
+    if game_type in (utils.GameType.THESIMS2, utils.GameType.THESIMS2PETS) and model_id == 0x4EDC19C6:
+        return True, [
+            1169126008,
+            645828095,
+            1050369096,
+            496927920,
+        ]
+
+    # car_junker
+    if game_type in (utils.GameType.THESIMS2, utils.GameType.THESIMS2PETS) and model_id == 0xCC2F0172:
+        return True, [
+            2327710721,
+            3916428166,
+            395150510,
+            3061146758,
+        ]
+
+    # car_law
+    if game_type in (utils.GameType.THESIMS2, utils.GameType.THESIMS2PETS) and model_id == 0x98DB24BB:
+        return True, [
+            1160077933,
+            653565418,
+            1397109427,
+            2542703024,
+        ]
 
     match game_type:
         case utils.GameType.THESIMS:

@@ -120,6 +120,12 @@ THE_SIMS_2_MODEL_ID_CHARACTER_ID_MAP = {
     0xF2912BED: 0x25BCAA65,  # bed_double_romantic_left_strobe
     0xFFF01B06: 0xF14AF22C,  # bed_double_romantic_right_on
     0xAD9D1AEE: 0xF14AF22C,  # bed_double_romantic_right_strobe
+    0x68E5A7C0: 0x6E11A4D5,  # car_art
+    0xE7E58843: 0x6E11A4D5,  # car_athlete
+    0x9026908F: 0x6E11A4D5,  # car_business
+    0x4EDC19C6: 0x6E11A4D5,  # car_film
+    0xCC2F0172: 0x6E11A4D5,  # car_junker
+    0x98DB24BB: 0x6E11A4D5,  # car_law
     0xFCDCC7AA: 0xDDA1A5D3,  # dm_bulldog
     0x51C0756: 0xFFA60350,  # npc_captain_catastrophe
     0x992EEB73: 0x1FB80AF4,  # NPC_catwoman
