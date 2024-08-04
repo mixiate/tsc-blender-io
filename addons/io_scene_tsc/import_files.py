@@ -60,7 +60,7 @@ def import_files(
 
             logger.info(f"Could not import {file_path} as model or animation")  # noqa: G004
 
-    if cleanup_meshes:
+    if cleanup_meshes and object_list:
         previous_active_object = context.view_layer.objects.active
         bpy.ops.object.select_all(action='DESELECT')
 
