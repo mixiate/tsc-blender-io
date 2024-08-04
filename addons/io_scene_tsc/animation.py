@@ -26,6 +26,7 @@ def decompress_quaternion_keyframes(
     stream_data: bit_array.BitArray,
     index: int,
     fps: float,
+    game_type: utils.GameType,
 ) -> list[QuaternionKeyframe]:
     """Decompress quaternion keyframes."""
     index = -index
@@ -39,12 +40,12 @@ def decompress_quaternion_keyframes(
     bias_bit_count = stream_data.get_bits_unsigned(index, 5)
     index += 5
 
-    bias_scale = 1.0 / float((1 << ((bias_bit_count - 1) & 0x1F)) + -1)
+    bias_scale = 0.0 if bias_bit_count == 0 else stream_data.signed_bits_to_float_scaler(bias_bit_count)
 
     quaternion_bit_count = stream_data.get_bits_unsigned(index, 5)
     index += 5
 
-    quaternion_scale = 1.0 / float((1 << ((quaternion_bit_count - 1) & 0x1F)) + -1)
+    quaternion_scale = stream_data.signed_bits_to_float_scaler(quaternion_bit_count)
 
     frame_count_multiplier = 1 if fps == 60.0 else 2
 
@@ -55,28 +56,53 @@ def decompress_quaternion_keyframes(
         delta_time = stream_data.get_bits_unsigned(index, delta_time_bit_count)
         index += delta_time_bit_count
 
-        bias = bias_scale * float(stream_data.get_bits_unsigned(index, bias_bit_count)) if bias_bit_count > 0 else 1.0
+        bias = bias_scale * float(stream_data.get_bits_signed(index, bias_bit_count)) if bias_bit_count > 0 else 0.0
         index += bias_bit_count
 
-        quat = [0.0, 0.0, 0.0, 0.0]
-        for i in range(1, 4):
-            quat[i] = quaternion_scale * stream_data.get_bits_signed(index, quaternion_bit_count)
-            index += quaternion_bit_count
+        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+            # skip unknown bit
+            index += 1
 
-        quat[0] = 1.0 - ((quat[1] * quat[1]) + (quat[2] * quat[2]) + (quat[3] * quat[3]))
+            quat = [0.0, 0.0, 0.0, 0.0]
+            for i in range(3):
+                quat[i] = quaternion_scale * stream_data.get_bits_signed(index, quaternion_bit_count)
+                index += quaternion_bit_count
 
-        negate_x = stream_data.get_bit(index)
-        index += 1
+            quat[3] = 1.0 - ((quat[1] * quat[1]) + (quat[2] * quat[2]) + (quat[3] * quat[3]))
 
-        if quat[0] > 0.0:
-            quat[0] = math.sqrt(quat[0])
+            negate_x = stream_data.get_bit(index)
+            index += 1
 
-            if negate_x:
-                quat[0] = -quat[0]
+            if quat[3] > 0.0:
+                quat[3] = math.sqrt(quat[3])
+
+                if negate_x:
+                    quat[3] = -quat[3]
+            else:
+                quat[3] = 0.0
+
+            quat = [quat[3], quat[0], quat[1], quat[2]]
+
         else:
-            quat[0] = 0.0
+            quat = [0.0, 0.0, 0.0, 0.0]
+            for i in range(1, 4):
+                quat[i] = quaternion_scale * stream_data.get_bits_signed(index, quaternion_bit_count)
+                index += quaternion_bit_count
 
-        quat = [quat[3], quat[0], quat[1], quat[2]]
+            quat[0] = 1.0 - ((quat[1] * quat[1]) + (quat[2] * quat[2]) + (quat[3] * quat[3]))
+
+            negate_x = stream_data.get_bit(index)
+            index += 1
+
+            if quat[0] > 0.0:
+                quat[0] = math.sqrt(quat[0])
+
+                if negate_x:
+                    quat[0] = -quat[0]
+            else:
+                quat[0] = 0.0
+
+            quat = [quat[3], quat[0], quat[1], quat[2]]
 
         frame_count += delta_time + 1
 
@@ -85,6 +111,89 @@ def decompress_quaternion_keyframes(
                 (frame_count * frame_count_multiplier) - 1,
                 bias,
                 mathutils.Quaternion(quat).normalized(),
+            ),
+        )
+
+    return keyframes
+
+
+def decompress_quaternion_1_dof_keyframes(
+    stream_data: bit_array.BitArray,
+    index: int,
+    fps: float,
+) -> list[QuaternionKeyframe]:
+    """Decompress quaternion 1 dof keyframes."""
+    index = -index
+
+    x = stream_data.get_float(index)
+    index += 32
+
+    y = stream_data.get_float(index)
+    index += 32
+
+    z = stream_data.get_float(index)
+    index += 32
+
+    keyframe_count = stream_data.get_bits_unsigned(index, 20)
+    index += 20
+
+    delta_time_bit_count = stream_data.get_bits_unsigned(index, 5)
+    index += 5
+
+    bias_bit_count = stream_data.get_bits_unsigned(index, 5)
+    index += 5
+
+    bias_scale = 0.0 if bias_bit_count == 0 else stream_data.signed_bits_to_float_scaler(bias_bit_count)
+
+    element_bit_count = stream_data.get_bits_unsigned(index, 5)
+    index += 5
+
+    if element_bit_count == 0:
+        element_bit_count = 32
+
+    if element_bit_count == 32:
+        element_scale = 1.0
+        element_offset = 0.0
+    else:
+        element_scale = stream_data.unsigned_bits_to_float_scaler(element_bit_count)
+
+        scale_float = stream_data.get_float(index)
+        index += 32
+
+        element_scale = scale_float * element_scale
+
+        element_offset = stream_data.get_float(index)
+        index += 32
+
+    frame_count_multiplier = 1 if fps == 60.0 else 2
+
+    frame_count = 0
+    keyframes = []
+
+    for _ in range(keyframe_count):
+        delta_time = stream_data.get_bits_unsigned(index, delta_time_bit_count)
+        index += delta_time_bit_count
+
+        bias = bias_scale * float(stream_data.get_bits_signed(index, bias_bit_count))
+        index += bias_bit_count
+
+        if element_bit_count == 32:
+            element = stream_data.get_float(index)
+            index += 32
+        else:
+            element = element_offset + (element_scale * stream_data.get_bits_unsigned(index, element_bit_count))
+            index += element_bit_count
+
+        sin = math.sin(0.5 * element)
+        w = math.cos(0.5 * element)
+
+        frame_count += delta_time + 1
+
+        keyframes.append(
+            QuaternionKeyframe(
+                (frame_count * frame_count_multiplier) - 1,
+                bias,
+                mathutils.Quaternion((w, x * sin, y * sin, z * sin)).normalized(),
             ),
         )
 
@@ -100,7 +209,12 @@ class VectorKeyframe:
     vector: mathutils.Vector
 
 
-def decompress_vector_keyframes(stream_data: bit_array.BitArray, index: int, fps: float) -> list[VectorKeyframe]:
+def decompress_vector_keyframes(
+    stream_data: bit_array.BitArray,
+    index: int,
+    fps: float,
+    game_type: utils.GameType,
+) -> list[VectorKeyframe]:
     """Decompress vector keyframes."""
     index = -index
 
@@ -113,27 +227,21 @@ def decompress_vector_keyframes(stream_data: bit_array.BitArray, index: int, fps
     bias_bit_count = stream_data.get_bits_unsigned(index, 5)
     index += 5
 
-    bias_scale = 1.0 / float((1 << ((bias_bit_count - 1) & 0x1F)) + -1)
+    bias_scale = 0.0 if bias_bit_count == 0 else stream_data.signed_bits_to_float_scaler(bias_bit_count)
 
     vector_bit_count = stream_data.get_bits_unsigned(index, 5)
     index += 5
 
-    vector_scale = 1.0 / float((1 << (vector_bit_count & 0x1F)) + -1)
+    vector_scale = 1.0 if vector_bit_count == 32 else stream_data.unsigned_bits_to_float_scaler(vector_bit_count)
 
     scale = [0.0, 0.0, 0.0]
     offset = [0.0, 0.0, 0.0]
     for i in range(3):
-        scale_bits = stream_data.get_bits_unsigned(index, 32)
+        scale[i] = vector_scale * stream_data.get_float(index)
         index += 32
 
-        scale_float = ctypes.c_float.from_buffer(ctypes.c_uint32(scale_bits)).value
-        scale[i] = vector_scale * scale_float
-
-        offset_bits = stream_data.get_bits_unsigned(index, 32)
+        offset[i] = stream_data.get_float(index)
         index += 32
-
-        offset_float = ctypes.c_float.from_buffer(ctypes.c_uint32(offset_bits)).value
-        offset[i] = offset_float
 
     frame_count_multiplier = 1 if fps == 60.0 else 2
 
@@ -144,20 +252,24 @@ def decompress_vector_keyframes(stream_data: bit_array.BitArray, index: int, fps
         delta_time = stream_data.get_bits_unsigned(index, delta_time_bit_count)
         index += delta_time_bit_count
 
-        bias = bias_scale * float(stream_data.get_bits_unsigned(index, bias_bit_count)) if bias_bit_count > 0 else 1.0
+        bias = bias_scale * float(stream_data.get_bits_unsigned(index, bias_bit_count)) if bias_bit_count > 0 else 0.0
         index += bias_bit_count
+
+        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+            # skip unknown bit
+            index += 1
 
         vector = [0.0, 0.0, 0.0]
         for i in range(3):
-            value = stream_data.get_bits_unsigned(index, vector_bit_count)
+            if vector_bit_count == 32:
+                value = stream_data.get_float(index)
+            else:
+                value = stream_data.get_bits_unsigned(index, vector_bit_count)
             index += vector_bit_count
 
             value = float(value & 1 | value >> 2) if ctypes.c_int32(value).value < 0 else float(value)
 
-            vector[i] = value
-
-        for i in range(3):
-            vector[i] = (vector[i] * scale[i]) + offset[i]
+            vector[i] = (value * scale[i]) + offset[i]
 
         frame_count += delta_time + 1
 
@@ -191,9 +303,12 @@ def read_bone(
     match game_type:
         case utils.GameType.THESIMSBUSTINOUT:
             file.read(16)
-        case utils.GameType.THEURBZ:
-            file.read(20)
-        case utils.GameType.THESIMS2:
+        case (
+            utils.GameType.THEURBZ
+            | utils.GameType.THESIMS2
+            | utils.GameType.THESIMS2PETS
+            | utils.GameType.THESIMS2CASTAWAY
+        ):
             file.read(20)
 
     rotation_keyframes = []
@@ -216,7 +331,17 @@ def read_bone(
             ),
         ]
     elif rotation_index < 0:
-        rotation_keyframes = decompress_quaternion_keyframes(stream_data, rotation_index, fps)
+        is_1_dof = False
+
+        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+            is_1_dof = stream_data.get_bit(-rotation_index)
+            rotation_index -= 1
+
+        if is_1_dof:
+            rotation_keyframes = decompress_quaternion_1_dof_keyframes(stream_data, rotation_index, fps)
+        else:
+            rotation_keyframes = decompress_quaternion_keyframes(stream_data, rotation_index, fps, game_type)
+
     else:
         rotation_keyframes = [QuaternionKeyframe(0, 1.0, mathutils.Quaternion((1.0, 0.0, 0.0, 0.0)))]
 
@@ -229,7 +354,7 @@ def read_bone(
             ),
         ]
     elif scale_index < 0:
-        scale_keyframes = decompress_vector_keyframes(stream_data, scale_index, fps)
+        scale_keyframes = decompress_vector_keyframes(stream_data, scale_index, fps, game_type)
     else:
         scale_keyframes = [VectorKeyframe(0, 1.0, mathutils.Vector((1.0, 1.0, 1.0)))]
 
@@ -242,7 +367,7 @@ def read_bone(
             ),
         ]
     elif location_index < 0:
-        location_keyframes = decompress_vector_keyframes(stream_data, location_index, fps)
+        location_keyframes = decompress_vector_keyframes(stream_data, location_index, fps, game_type)
     else:
         location_keyframes = [VectorKeyframe(0, 1.0, mathutils.Vector((0.0, 0.0, 0.0)))]
 
@@ -272,13 +397,13 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
     match game_type:
         case utils.GameType.THEURBZ:
             file.read(20)
-        case utils.GameType.THESIMS2:
+        case utils.GameType.THESIMS2 | utils.GameType.THESIMS2PETS | utils.GameType.THESIMS2CASTAWAY:
             file.read(16)
 
     name = utils.read_null_terminated_string(file)
 
     match game_type:
-        case utils.GameType.THESIMS2:
+        case utils.GameType.THESIMS2 | utils.GameType.THESIMS2PETS | utils.GameType.THESIMS2CASTAWAY:
             file.read(4)
 
     frame_count = struct.unpack(endianness + 'I', file.read(4))[0]
@@ -294,14 +419,21 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
             bone_size = 12
         case utils.GameType.THESIMSBUSTINOUT:
             bone_size = 28
-        case utils.GameType.THEURBZ:
-            bone_size = 32
-        case utils.GameType.THESIMS2:
+        case (
+            utils.GameType.THEURBZ
+            | utils.GameType.THESIMS2
+            | utils.GameType.THESIMS2PETS
+            | utils.GameType.THESIMS2CASTAWAY
+        ):
             bone_size = 32
         case _:
             raise utils.FileReadError
 
     file.seek(bone_position + (bone_count * bone_size) + 4)
+
+    if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+        file.read(4)
+
     static_float_count = struct.unpack(endianness + 'I', file.read(4))[0]
     static_data = [struct.unpack(endianness + 'f', file.read(4))[0] for _ in range(static_float_count)]
 
@@ -332,7 +464,7 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
 
     file.seek(end_position)
 
-    if game_type == utils.GameType.THESIMS2:
+    if game_type in (utils.GameType.THESIMS2, utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
         sound_count = struct.unpack(endianness + 'I', file.read(4))[0]
 
         for _ in range(sound_count):

@@ -168,6 +168,43 @@ THE_SIMS_2_MODEL_ID_CHARACTER_ID_MAP = {
 }
 
 
+THE_SIMS_2_PETS_MODEL_ID_CHARACTER_ID_MAP = {
+    0x68E5A7C0: 0x6E11A4D5,  # car_art
+    0xE7E58843: 0x6E11A4D5,  # car_athlete
+    0x9026908F: 0x6E11A4D5,  # car_business
+    0x4EDC19C6: 0x6E11A4D5,  # car_film
+    0xCC2F0172: 0x6E11A4D5,  # car_junker
+    0x98DB24BB: 0x6E11A4D5,  # car_law
+    0xFCDCC7AA: 0xDDA1A5D3,  # dm_bulldog
+    0x51C0756: 0xFFA60350,  # npc_captain_catastrophe
+    0x992EEB73: 0x1FB80AF4,  # NPC_catwoman
+    0x1B0F1BFC: 0xFFA60350,  # npc_chinese_food_deliveryman
+    0x67BDD567: 0xFFA60350,  # NPC_cop
+    0xB99FA3F9: 0xFFA60350,  # npc_darius
+    0x20522B4D: 0xFFA60350,  # NPC_Firefighter
+    0x1848BC46: 0xFFA60350,  # npc_harry_the_hustler
+    0xE7AC3CB4: 0x1FB80AF4,  # npc_hot_topic_girl
+    0x93A0F0C9: 0xFFA60350,  # npc_jj_helper
+    0x53BBF6CD: 0xFFA60350,  # npc_mopoe
+    0xF50EA6F6: 0xFFA60350,  # NPC_Reaper
+    0x14D1270F: 0x82FAC10A,  # plumbing_bathtub_ornate_2x1_empty_clean
+    0x28261DF3: 0x84ACF84F,  # plumbing_bathtub_ornate_new_empty_clean
+    0x445A2155: 0x1FB80AF4,  # snpc_cop
+    0xFAAB1F69: 0x1FB80AF4,  # snpc_firefighter
+    0x761CE37: 0xFFA60350,  # snpc_gardner
+    0xC9B7667F: 0x1FB80AF4,  # snpc_maid
+    0x3BE3817: 0xFFA60350,  # snpc_mailman
+    0xD0B6308D: 0x1FB80AF4,  # snpc_maintenanceman
+    0x9E35E02B: 0xFFA60350,  # snpc_paperboy
+    0xA40BA562: 0xFFA60350,  # snpc_paramedic
+    0xAF331F80: 0xFFA60350,  # snpc_police
+    0x9C5FC449: 0xFFA60350,  # snpc_reaper
+    0x76FCCC3B: 0xFFA60350,  # snpc_repoman
+    0x842D5BDB: 0xFFA60350,  # snpc_thief
+    0x13F0DDE: 0xFFA60350,  # snpc_trainer
+}
+
+
 def get_character_id_from_model(model_name: str, model_id: int, game_type: utils.GameType) -> int:
     """Get the character ID from the model name or ID."""
     if model_name.startswith(("fa_", "af_")):
@@ -192,5 +229,7 @@ def get_character_id_from_model(model_name: str, model_id: int, game_type: utils
             character_id = THE_URBZ_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
         case utils.GameType.THESIMS2:
             character_id = THE_SIMS_2_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
+        case utils.GameType.THESIMS2PETS:
+            character_id = THE_SIMS_2_PETS_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
 
     return character_id

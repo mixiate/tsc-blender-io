@@ -1,5 +1,7 @@
 """Bit Array."""
 
+import ctypes
+
 
 class BitArray:
     """Bit Array."""
@@ -47,3 +49,17 @@ class BitArray:
             return (-1 << (count & 0x1F)) | bits
 
         return self.get_bits_unsigned(index, count)
+
+    def get_float(self, index: int) -> float:
+        """Get bits as float."""
+        bits = self.get_bits_unsigned(index, 32)
+
+        return ctypes.c_float.from_buffer(ctypes.c_uint32(bits)).value
+
+    def signed_bits_to_float_scaler(self, bits: int) -> float:
+        """Calculate the float scaler from signed bits."""
+        return 1.0 / float((1 << (bits - 1)) - 1)
+
+    def unsigned_bits_to_float_scaler(self, bits: int) -> float:
+        """Calculate the float scaler from unsigned bits."""
+        return 1.0 / float((1 << bits) - 1)

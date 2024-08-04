@@ -174,9 +174,6 @@ def list_animation_ids_from_model_id(  # noqa: PLR0911
                 animation_ids = [read_animation_id(file, game_type, endianness) for _ in range(count)]
                 animation_ids = [x for x in animation_ids if x is not None]
 
-                if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
-                    return True, []
-
                 return True, list(dict.fromkeys(animation_ids))
 
             return False, []
