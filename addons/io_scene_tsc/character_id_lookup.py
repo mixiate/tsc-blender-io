@@ -205,6 +205,43 @@ THE_SIMS_2_PETS_MODEL_ID_CHARACTER_ID_MAP = {
 }
 
 
+THE_SIMS_3_MODEL_ID_CHARACTER_ID_MAP = {
+    0xA849323F: 0xAEAF6B51,  #  treeAspenSmall_REF
+    0xAD0D309D: 0xD821FB06,  #  treeCherrySmall_REF
+    0xDF428BA: 0xD821FB06,  #  treeCypressMontereySmall_REF
+    0xA3C91FE0: 0xD821FB06,  #  treePear_REF
+}
+
+
+THE_SIMS_3_ADULT_SIM_PREFIXES = (
+    "afB",
+    "afE",
+    "afF",
+    "afG",
+    "afH",
+    "afR",
+    "afS",
+    "afT",
+    "amB",
+    "amE",
+    "amF",
+    "amG",
+    "amH",
+    "amR",
+    "amS",
+    "amT",
+    "tfB",
+    "tfF",
+    "tfS",
+    "tfT",
+    "tmB",
+    "tmF",
+    "tmS",
+    "tmT",
+)
+THE_SIMS_3_CHILD_SIM_PREFIXES = ("cfB", "cfF", "cfG", "cfH", "cfS", "cfT", "cmB", "cmF", "cmG", "cmH", "cmS", "cmT")
+
+
 def get_character_id_from_model(model_name: str, model_id: int, game_type: utils.GameType) -> int:
     """Get the character ID from the model name or ID."""
     if model_name.startswith(("fa_", "af_")):
@@ -217,6 +254,12 @@ def get_character_id_from_model(model_name: str, model_id: int, game_type: utils
         ("fc_", "cf_", "mc_", "cm_"),
     ):
         return 0xD5E79699
+
+    if game_type == utils.GameType.THESIMS3 and model_name.startswith(THE_SIMS_3_ADULT_SIM_PREFIXES):
+        return 0x2B150A49
+
+    if game_type == utils.GameType.THESIMS3 and model_name.startswith(THE_SIMS_3_CHILD_SIM_PREFIXES):
+        return 0x4B49BF02
 
     character_id = model_id
 
@@ -231,5 +274,7 @@ def get_character_id_from_model(model_name: str, model_id: int, game_type: utils
             character_id = THE_SIMS_2_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
         case utils.GameType.THESIMS2PETS:
             character_id = THE_SIMS_2_PETS_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
+        case utils.GameType.THESIMS3:
+            character_id = THE_SIMS_3_MODEL_ID_CHARACTER_ID_MAP.get(model_id, model_id)
 
     return character_id

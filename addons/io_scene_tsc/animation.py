@@ -59,7 +59,7 @@ def decompress_quaternion_keyframes(
         bias = bias_scale * float(stream_data.get_bits_signed(index, bias_bit_count)) if bias_bit_count > 0 else 0.0
         index += bias_bit_count
 
-        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY, utils.GameType.THESIMS3):
             # skip unknown bit
             index += 1
 
@@ -255,7 +255,7 @@ def decompress_vector_keyframes(
         bias = bias_scale * float(stream_data.get_bits_unsigned(index, bias_bit_count)) if bias_bit_count > 0 else 0.0
         index += bias_bit_count
 
-        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY, utils.GameType.THESIMS3):
             # skip unknown bit
             index += 1
 
@@ -308,6 +308,7 @@ def read_bone(
             | utils.GameType.THESIMS2
             | utils.GameType.THESIMS2PETS
             | utils.GameType.THESIMS2CASTAWAY
+            | utils.GameType.THESIMS3
         ):
             file.read(20)
 
@@ -333,7 +334,7 @@ def read_bone(
     elif rotation_index < 0:
         is_1_dof = False
 
-        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+        if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY, utils.GameType.THESIMS3):
             is_1_dof = stream_data.get_bit(-rotation_index)
             rotation_index -= 1
 
@@ -397,13 +398,23 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
     match game_type:
         case utils.GameType.THEURBZ:
             file.read(20)
-        case utils.GameType.THESIMS2 | utils.GameType.THESIMS2PETS | utils.GameType.THESIMS2CASTAWAY:
+        case (
+            utils.GameType.THESIMS2
+            | utils.GameType.THESIMS2PETS
+            | utils.GameType.THESIMS2CASTAWAY
+            | utils.GameType.THESIMS3
+        ):
             file.read(16)
 
     name = utils.read_null_terminated_string(file)
 
     match game_type:
-        case utils.GameType.THESIMS2 | utils.GameType.THESIMS2PETS | utils.GameType.THESIMS2CASTAWAY:
+        case (
+            utils.GameType.THESIMS2
+            | utils.GameType.THESIMS2PETS
+            | utils.GameType.THESIMS2CASTAWAY
+            | utils.GameType.THESIMS3
+        ):
             file.read(4)
 
     frame_count = struct.unpack(endianness + 'I', file.read(4))[0]
@@ -424,6 +435,7 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
             | utils.GameType.THESIMS2
             | utils.GameType.THESIMS2PETS
             | utils.GameType.THESIMS2CASTAWAY
+            | utils.GameType.THESIMS3
         ):
             bone_size = 32
         case _:
@@ -431,7 +443,7 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
 
     file.seek(bone_position + (bone_count * bone_size) + 4)
 
-    if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY):
+    if game_type in (utils.GameType.THESIMS2PETS, utils.GameType.THESIMS2CASTAWAY, utils.GameType.THESIMS3):
         file.read(4)
 
     static_float_count = struct.unpack(endianness + 'I', file.read(4))[0]
@@ -470,6 +482,9 @@ def read_animation(file: typing.BinaryIO, endianness: str, game_type: utils.Game
         for _ in range(sound_count):
             file.read(8)
             _ = utils.read_null_terminated_string(file)
+
+    if game_type == utils.GameType.THESIMS3:
+        file.read(4)
 
     if len(file.read(4)) != 4:
         raise utils.FileReadError

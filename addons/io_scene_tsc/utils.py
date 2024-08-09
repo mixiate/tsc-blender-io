@@ -27,6 +27,7 @@ class GameType(enum.Enum):
     THESIMS2 = 3
     THESIMS2PETS = 4
     THESIMS2CASTAWAY = 5
+    THESIMS3 = 6
 
 
 def read_null_terminated_string(file: typing.BinaryIO) -> str:

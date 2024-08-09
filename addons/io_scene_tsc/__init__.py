@@ -1,7 +1,7 @@
 """The Sims Console Blender IO."""
 
 bl_info = {
-    "name": "Import The Sims, Bustin' Out, Urbz, 2, Pets, Castaway format",
+    "name": "Import The Sims, Bustin' Out, Urbz, 2, Pets, Castaway, 3 format",
     "description": "Import models from the first generation of The Sims console games.",
     "author": "mix",
     "version": (2, 2, 0),
@@ -33,9 +33,9 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Import model operator."""
 
     bl_idname: str = "import.model"
-    bl_label: str = "The Sims, Bustin' Out, Urbz, 2, Pets, Castaway"
+    bl_label: str = "The Sims, Bustin' Out, Urbz, 2, Pets, Castaway, 3"
     bl_description: str = (
-        "The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets or The Sims 2 Castaway Model"
+        "The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets, The Sims 2 Castaway or The Sims 3 Model"
     )
     bl_options: typing.ClassVar[set[str]] = {'UNDO'}
 
@@ -60,8 +60,14 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     )
 
     flip_normals_x_axis: bpy.props.BoolProperty(  # type: ignore[valid-type]
-        name="Flip Normals On the X Axis",
+        name="Flip Normals X Axis (The Sims 2+ Fix)",
         description="Flip the normals on the x axis. This is needed for some models from The Sims 2 + games",
+        default=False,
+    )
+
+    invert_normals: bpy.props.BoolProperty(  # type: ignore[valid-type]
+        name="Invert Normals (The Sims 3 Fix)",
+        description="Invert all normals. This is needed for some models from The Sims 3",
         default=False,
     )
 
@@ -92,6 +98,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             paths,
             import_animations=self.import_animations,
             flip_normals_x_axis=self.flip_normals_x_axis,
+            invert_normals=self.invert_normals,
             cleanup_meshes=self.cleanup_meshes,
         )
 
@@ -106,6 +113,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         col = self.layout.column()
         col.prop(self, "import_animations")
         col.prop(self, "flip_normals_x_axis")
+        col.prop(self, "invert_normals")
         col.prop(self, "cleanup_meshes")
 
 

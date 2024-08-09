@@ -37,7 +37,20 @@ def import_character(
         return None
 
     if (
-        model_name.startswith(("fa_", "af_", "ma_", "am_", "fc_", "cf_", "mc_", "cm_"))
+        model_name.startswith(
+            (
+                "fa_",
+                "af_",
+                "ma_",
+                "am_",
+                "fc_",
+                "cf_",
+                "mc_",
+                "cm_",
+                *character_id_lookup.THE_SIMS_3_ADULT_SIM_PREFIXES,
+                *character_id_lookup.THE_SIMS_3_CHILD_SIM_PREFIXES,
+            )
+        )
         and context.view_layer.objects.active is not None
         and context.view_layer.objects.active.type == 'ARMATURE'
         and [x.name for x in char_desc.bones] == [x.name for x in context.view_layer.objects.active.data.bones]
@@ -57,25 +70,28 @@ def import_character(
 
         armature_bone.length = 0.075
         armature_bone.matrix = mathutils.Matrix.LocRotScale(bone.translation, bone.rotation, None)
-        armature_bone.matrix @= utils.BONE_ROTATION_OFFSET
+
+        if game_type != utils.GameType.THESIMS3:
+            armature_bone.matrix @= utils.BONE_ROTATION_OFFSET
 
     for bone_index, bone in enumerate(char_desc.bones):
         for child_index in bone.children:
             armature.edit_bones[child_index].parent = armature.edit_bones[bone_index]
 
-    for bone in armature.edit_bones:
-        if bone.parent and bone.head != bone.parent.head:
-            previous_parent_tail = copy.copy(bone.parent.tail)
-            previous_parent_quat = bone.parent.matrix.to_4x4().to_quaternion()
-            bone.parent.tail = bone.head
-            quaternion_difference = bone.parent.matrix.to_4x4().to_quaternion().dot(previous_parent_quat)
-            if not math.isclose(quaternion_difference, 1.0, rel_tol=1e-05):
-                bone.parent.tail = previous_parent_tail
-            else:
-                bone.use_connect = True
+    if game_type != utils.GameType.THESIMS3:
+        for bone in armature.edit_bones:
+            if bone.parent and bone.head != bone.parent.head:
+                previous_parent_tail = copy.copy(bone.parent.tail)
+                previous_parent_quat = bone.parent.matrix.to_4x4().to_quaternion()
+                bone.parent.tail = bone.head
+                quaternion_difference = bone.parent.matrix.to_4x4().to_quaternion().dot(previous_parent_quat)
+                if not math.isclose(quaternion_difference, 1.0, rel_tol=1e-05):
+                    bone.parent.tail = previous_parent_tail
+                else:
+                    bone.use_connect = True
 
-            if len(bone.children) == 0:
-                bone.length = bone.parent.length
+                if len(bone.children) == 0:
+                    bone.length = bone.parent.length
 
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')

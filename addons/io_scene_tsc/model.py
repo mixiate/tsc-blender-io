@@ -37,31 +37,52 @@ class Vertex:
     unknown: int
 
 
-def read_vertices(
+def read_positions(
     file: typing.BinaryIO,
     count: int,
     float_type: FloatType,
     endianness: str,
     scale: float,
+    element_count: int,
 ) -> list[Vertex]:
     """Read vertices."""
     match float_type:
         case FloatType.FLOAT32:
-            return [
-                Vertex(
-                    struct.unpack(endianness + '3f', file.read(4 * 3)),
-                    struct.unpack(endianness + 'i', file.read(4))[0],
-                )
-                for _ in range(count)
-            ]
+            match element_count:
+                case 3:
+                    return [
+                        Vertex(
+                            struct.unpack(endianness + '3f', file.read(4 * 3)),
+                            0,
+                        )
+                        for _ in range(count)
+                    ]
+                case 4:
+                    return [
+                        Vertex(
+                            struct.unpack(endianness + '3f', file.read(4 * 3)),
+                            struct.unpack(endianness + 'i', file.read(4))[0],
+                        )
+                        for _ in range(count)
+                    ]
         case FloatType.SNORM16:
-            return [
-                Vertex(
-                    [snorm_to_float(x, scale) for x in struct.unpack(endianness + '3h', file.read(2 * 3))],
-                    struct.unpack(endianness + 'h', file.read(2))[0],
-                )
-                for _ in range(count)
-            ]
+            match element_count:
+                case 3:
+                    return [
+                        Vertex(
+                            [snorm_to_float(x, scale) for x in struct.unpack(endianness + '3h', file.read(2 * 3))],
+                            0,
+                        )
+                        for _ in range(count)
+                    ]
+                case 4:
+                    return [
+                        Vertex(
+                            [snorm_to_float(x, scale) for x in struct.unpack(endianness + '3h', file.read(2 * 3))],
+                            struct.unpack(endianness + 'h', file.read(2))[0],
+                        )
+                        for _ in range(count)
+                    ]
 
     raise utils.FileReadError
 
@@ -113,19 +134,25 @@ class Mesh:
     uvs: list[tuple[float, float]]
     uvs_2: list[tuple[float, float]]
     normals: list[tuple[float, float, float]]
+    colors: list[tuple[int, int, int, int]]
     bones: list[list[int]]
     bone_weights: list[tuple[int, int, int, int]]
     indices: list[int]
+    indices_normals: list[int]
+    indices_colors: list[int]
+    indices_uvs: list[int]
     strips: list[tuple[int, int]]
     shader_id: int
 
 
 MESH_FLAGS_HAS_UVS = 0b0000_0010
-MESH_FLAGS_HAS_UNKNOWN = 0b0000_0100
+MESH_FLAGS_HAS_COLORS = 0b0000_0100
 MESH_FLAGS_HAS_NORMALS = 0b0000_1000
 MESH_FLAGS_HAS_SNORM_FLOATS = 0b0001_0000
 MESH_FLAGS_HAS_INDICES = 0b0010_0000
 MESH_FLAGS_HAS_UVS_2 = 0b0100_0000
+MESH_FLAGS_HAS_MORPH_DELTAS = 0b1_0000_0000
+MESH_FLAGS_HAS_SEPARATE_COUNTS = 0b10_0000_0000
 
 
 def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: float) -> Mesh:
@@ -140,7 +167,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: flo
     if game in (GameType.THESIMSBUSTINOUT, GameType.THEURBZ, GameType.THESIMS2, GameType.THESIMS2PETS):
         file.read(4)
 
-    if game == GameType.THESIMS2CASTAWAY:
+    if game in (GameType.THESIMS2CASTAWAY, GameType.THESIMS3):
         file.read(52)
 
     float_type = FloatType.SNORM16 if flags & MESH_FLAGS_HAS_SNORM_FLOATS else FloatType.FLOAT32
@@ -149,124 +176,161 @@ def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: flo
     uvs = []
     uvs_2 = []
     normals = []
+    colors = []
     bones = []
     bone_weights = []
     indices = []
+    indices_normals = []
+    indices_colors = []
+    indices_uvs = []
     strips = []
 
     previous_strip_end = 0
 
-    strip_type = 0
+    bone_count = 0
+    bone_ids = [0, 1, 2, 3]
+    read_bone_weights = False
 
-    for _ in range(strip_count):
-        if strip_type != 4:
-            strip_type = struct.unpack(endianness + 'B', file.read(1))[0]
+    while True:
+        command = struct.unpack(endianness + 'B', file.read(1))[0]
+        match command:
+            case 0:
+                position_count = struct.unpack(endianness + 'I', file.read(4))[0]
 
-        match strip_type:
+                if flags & MESH_FLAGS_HAS_SEPARATE_COUNTS:
+                    element_count = 3
+                    normal_count = struct.unpack(endianness + 'I', file.read(4))[0]
+                    color_count = struct.unpack(endianness + 'I', file.read(4))[0]
+                    uv_count = struct.unpack(endianness + 'I', file.read(4))[0]
+                else:
+                    element_count = 4
+                    normal_count = position_count
+                    color_count = position_count
+                    uv_count = position_count
+
+                positions += read_positions(file, position_count, float_type, endianness, scale, element_count)
+
+                if flags & MESH_FLAGS_HAS_UVS:
+                    if flags & MESH_FLAGS_HAS_UVS_2:
+                        uv_data = read_double_uvs(file, uv_count, float_type, endianness)
+                        uvs += [(x[0], x[1]) for x in uv_data]
+                        uvs_2 += [(x[2], x[3]) for x in uv_data]
+                    else:
+                        uvs += read_uvs(file, uv_count, float_type, endianness)
+
+                if flags & MESH_FLAGS_HAS_COLORS:
+                    colors += [struct.unpack(endianness + '4B', file.read(4)) for _ in range(color_count)]
+
+                if flags & MESH_FLAGS_HAS_NORMALS:
+                    normal_format, normal_size = (
+                        (endianness + '4b', 4)
+                        if game
+                        in (GameType.THESIMS2, GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY, GameType.THESIMS3)
+                        and element_count == 4
+                        else (endianness + '3b', 3)
+                    )
+                    normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(normal_count)]
+                    for normal_data in normals_data:
+                        normal = mathutils.Vector(
+                            (
+                                float(normal_data[0]) / 127.0,
+                                float(normal_data[1]) / 127.0,
+                                float(normal_data[2]) / 127.0,
+                            ),
+                        ).normalized()
+                        normals.append(normal)
+
+                bones += [bone_ids[: max(bone_count, 1)] for _ in range(position_count)]
+
+                if read_bone_weights:
+                    bone_weights += [struct.unpack(endianness + '4B', file.read(4)) for _ in range(position_count)]
+                else:
+                    bone_weights += [(255, 255, 255, 255) for _ in range(position_count)]
+
+                if flags & MESH_FLAGS_HAS_MORPH_DELTAS:
+                    file.read(position_count * 32)
+
+                if flags & MESH_FLAGS_HAS_INDICES:
+                    if game in (GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY, GameType.THESIMS3):
+                        unknown_count = struct.unpack(endianness + 'I', file.read(4))[0]
+                        channel_count = struct.unpack(endianness + 'B', file.read(1))[0]
+
+                        indices_data_length = struct.unpack(endianness + 'I', file.read(4))[0]
+
+                        file.read(4)
+                        indices_data_start_pos = file.tell()
+                        file.read(1)
+
+                        index_count = struct.unpack(endianness + 'H', file.read(2))[0]
+
+                        format_string = endianness + str(channel_count) + 'H'
+
+                        indices_data = [
+                            struct.unpack(format_string, file.read(channel_count * 2)) for _ in range(index_count)
+                        ]
+                        indices_data = list(map(list, zip(*indices_data)))
+                        match channel_count:
+                            case 3:
+                                indices += indices_data[0]
+                                indices_normals += indices_data[1]
+                                indices_uvs += indices_data[2]
+                            case 4:
+                                indices += indices_data[0]
+                                indices_normals += indices_data[1]
+                                indices_colors += indices_data[2]
+                                indices_uvs += indices_data[3]
+                            case _:
+                                raise utils.FileReadError
+
+                        file.seek(indices_data_start_pos + indices_data_length)
+
+                        read_unknown = True
+                        if game == GameType.THESIMS3:
+                            read_unknown = struct.unpack(endianness + 'B', file.read(1))[0] != 0
+
+                        if game in (GameType.THESIMS2CASTAWAY, GameType.THESIMS3) and read_unknown:
+                            file.read(unknown_count * 2)
+
+                    else:
+                        index_count = struct.unpack(endianness + 'I', file.read(4))[0]
+                        file.read(1)
+                        indices += [struct.unpack(endianness + 'H', file.read(2))[0] for _ in range(index_count)]
+                else:
+                    strips.append((previous_strip_end, previous_strip_end + position_count))
+
+                previous_strip_end = previous_strip_end + position_count
+
+                if bone_count != 4:
+                    bone_count = 0
+            case 1:
+                bone_id = struct.unpack(endianness + 'H', file.read(2))[0]
+                bone_index = struct.unpack(endianness + 'B', file.read(1))[0]
+                bone_ids[bone_index] = bone_id
+                bone_count += 1
             case 2:
-                file.read(1)
-            case 4:
-                marker = struct.unpack(endianness + 'B', file.read(1))[0]
-                if marker == 5:
-                    file.read(2)
-
-        bone_ids = []
-        read_bone_weights = False
-
-        match strip_type:
-            case 1 | 2:
-                while True:
-                    bone_id = struct.unpack(endianness + 'H', file.read(2))[0]
-                    bone_ids.append(bone_id)
-                    if struct.unpack(endianness + '2B', file.read(2))[1] == 0:
-                        break
-
-                    read_bone_weights = True
-            case 4:
-                bone_ids = [0, 1, 2, 3]
                 read_bone_weights = True
-            case _:
-                bone_ids = [0]
-
-        vertex_count = struct.unpack(endianness + 'I', file.read(4))[0]
-
-        positions += read_vertices(file, vertex_count, float_type, endianness, scale)
-
-        if flags & MESH_FLAGS_HAS_UVS:
-            if flags & MESH_FLAGS_HAS_UVS_2:
-                uv_data = read_double_uvs(file, vertex_count, float_type, endianness)
-                uvs += [(x[0], x[1]) for x in uv_data]
-                uvs_2 += [(x[2], x[3]) for x in uv_data]
-            else:
-                uvs += read_uvs(file, vertex_count, float_type, endianness)
-
-        if flags & MESH_FLAGS_HAS_UNKNOWN:
-            file.read(vertex_count * 4)
-
-        if flags & MESH_FLAGS_HAS_NORMALS:
-            normal_format, normal_size = (
-                (endianness + '4b', 4)
-                if game in (GameType.THESIMS2, GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY)
-                else (endianness + '3b', 3)
-            )
-            normals_data = [struct.unpack(normal_format, file.read(normal_size)) for _ in range(vertex_count)]
-            for normal_data in normals_data:
-                normal = mathutils.Vector(
-                    (
-                        (float(normal_data[0]) + 0.5) / 127.5,
-                        (float(normal_data[1]) + 0.5) / 127.5,
-                        (float(normal_data[2]) + 0.5) / 127.5,
-                    ),
-                ).normalized()
-                normals.append(normal)
-
-        if flags & MESH_FLAGS_HAS_INDICES:
-            if game in (GameType.THESIMS2PETS, GameType.THESIMS2CASTAWAY):
-                file.read(4)
-                file.read(1)
-
-                start_pos = file.tell()
-
-                indices_length = struct.unpack(endianness + 'I', file.read(4))[0]
-
-                file.read(5)
-
-                index_count = struct.unpack(endianness + 'H', file.read(2))[0]
-
-                element_count = int(((indices_length - 4) / index_count) / 2)
-                format_string = endianness + str(element_count) + 'H'
-
-                indices += [struct.unpack(format_string, file.read(element_count * 2))[0] for _ in range(index_count)]
-
-                file.seek(start_pos + indices_length + 8)
-
-                if game == GameType.THESIMS2CASTAWAY:
-                    file.read(index_count * 2)
-
-            else:
-                index_count = struct.unpack(endianness + 'I', file.read(4))[0]
-                file.read(1)
-                indices += [struct.unpack(endianness + 'H', file.read(2))[0] for _ in range(index_count)]
-        else:
-            strips.append((previous_strip_end, previous_strip_end + vertex_count))
-
-        previous_strip_end = previous_strip_end + vertex_count
-
-        bones += [bone_ids for _ in range(vertex_count)]
-
-        if read_bone_weights:
-            bone_weights += [struct.unpack(endianness + '4B', file.read(4)) for _ in range(vertex_count)]
-        else:
-            bone_weights += [(255, 255, 255, 255) for _ in range(vertex_count)]
+            case 3:
+                read_bone_weights = False
+            case 4:
+                bone_count = 4
+                read_bone_weights = True
+            case 5:
+                read_bone_weights = False
+            case 6:
+                break
 
     return Mesh(
         positions,
         uvs,
         uvs_2,
         normals,
+        colors,
         bones,
         bone_weights,
         indices,
+        indices_normals,
+        indices_colors,
+        indices_uvs,
         strips,
         shader_id,
     )
@@ -276,6 +340,7 @@ def read_mesh(file: typing.BinaryIO, game: GameType, endianness: str, scale: flo
 class SubModel:
     """SubModel."""
 
+    main_mesh: Mesh | None
     meshes: list[Mesh]
 
 
@@ -283,23 +348,22 @@ def read_sub_model(file: typing.BinaryIO, game: GameType, endianness: str, scale
     """Read SubModel."""
     file.read(4)
 
-    if game == GameType.THESIMS2CASTAWAY:
+    if game in (GameType.THESIMS2CASTAWAY, GameType.THESIMS3):
         unknown_count = struct.unpack(endianness + 'I', file.read(4))[0]
         for _ in range(unknown_count):
             if len(file.read(7 * 4)) == 0:
                 raise utils.FileReadError
 
+    main_mesh = None
+
+    if game == GameType.THESIMS3 and struct.unpack(endianness + 'B', file.read(1))[0] != 0:
+        main_mesh = read_mesh(file, game, endianness, scale)
+
     mesh_count = struct.unpack(endianness + 'I', file.read(4))[0]
 
-    meshes = []
-    for _ in range(mesh_count):
-        meshes.append(read_mesh(file, game, endianness, scale))
+    meshes = [read_mesh(file, game, endianness, scale) for _ in range(mesh_count)]
 
-        marker = struct.unpack(endianness + 'B', file.read(1))[0]
-        if marker != 6:
-            file.read(1)
-
-    return SubModel(meshes)
+    return SubModel(main_mesh, meshes)
 
 
 def read_unknowns(file: typing.BinaryIO, endianness: str) -> None:
@@ -357,6 +421,15 @@ def read_light_infos(file: typing.BinaryIO, endianness: str) -> None:
             raise utils.FileReadError
 
 
+def read_light_info_exs(file: typing.BinaryIO, endianness: str) -> None:
+    """Read light info exs."""
+    count = struct.unpack(endianness + 'I', file.read(4))[0]
+
+    for _ in range(count):
+        if len(file.read(125)) != 125:
+            raise utils.FileReadError
+
+
 @dataclasses.dataclass
 class Model:
     """Model."""
@@ -384,6 +457,8 @@ def read_model(file: typing.BinaryIO) -> Model:
             endianness, game_type = '>', GameType.THESIMS2PETS
         case 0x45000000:
             endianness, game_type = '>', GameType.THESIMS2CASTAWAY
+        case 0x4A000000:
+            endianness, game_type = '>', GameType.THESIMS3
         case _:
             raise utils.FileReadError
 
@@ -392,7 +467,7 @@ def read_model(file: typing.BinaryIO) -> Model:
             file.read(2)
         case GameType.THEURBZ:
             file.read(16)
-        case GameType.THESIMS2 | GameType.THESIMS2PETS | GameType.THESIMS2CASTAWAY:
+        case GameType.THESIMS2 | GameType.THESIMS2PETS | GameType.THESIMS2CASTAWAY | GameType.THESIMS3:
             if struct.unpack(endianness + 'I', file.read(4))[0] != FILE_MAGIC_ID:
                 raise utils.FileReadError
 
@@ -408,13 +483,19 @@ def read_model(file: typing.BinaryIO) -> Model:
             file.read(16)
         case GameType.THEURBZ:
             file.read(53)
-        case GameType.THESIMS2 | GameType.THESIMS2PETS | GameType.THESIMS2CASTAWAY:
+        case GameType.THESIMS2 | GameType.THESIMS2PETS | GameType.THESIMS2CASTAWAY | GameType.THESIMS3:
             file.read(57)
 
     match game_type:
         case GameType.THESIMSBUSTINOUT:
             read_light_infos(file, endianness)
-        case GameType.THEURBZ | GameType.THESIMS2 | GameType.THESIMS2PETS | GameType.THESIMS2CASTAWAY:
+        case (
+            GameType.THEURBZ
+            | GameType.THESIMS2
+            | GameType.THESIMS2PETS
+            | GameType.THESIMS2CASTAWAY
+            | GameType.THESIMS3
+        ):
             read_unknowns(file, endianness)
             read_bspline_volumes(file, endianness)
             read_dummies(file, endianness)
@@ -437,11 +518,14 @@ def read_model(file: typing.BinaryIO) -> Model:
             footer_length = 8
         case GameType.THESIMS2 | GameType.THESIMS2PETS:
             footer_length = 4
-        case GameType.THESIMS2CASTAWAY:
+        case GameType.THESIMS2CASTAWAY | GameType.THESIMS3:
             footer_length = 7
 
     if len(file.read(footer_length)) != footer_length:
         raise utils.FileReadError
+
+    if game_type == GameType.THESIMS3:
+        read_light_info_exs(file, endianness)
 
     return Model(
         name,

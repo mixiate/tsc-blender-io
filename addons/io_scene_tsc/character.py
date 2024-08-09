@@ -109,11 +109,12 @@ def read_file(file_path: pathlib.Path, game_type: utils.GameType, endianness: st
                     character = read_the_sims_character(file, endianness)
                 case utils.GameType.THEURBZ:
                     character = read_the_sims_character(file, endianness)
-                case utils.GameType.THESIMS2:
-                    character = read_the_sims_2_character(file, endianness)
-                case utils.GameType.THESIMS2PETS:
-                    character = read_the_sims_2_character(file, endianness)
-                case utils.GameType.THESIMS2CASTAWAY:
+                case (
+                    utils.GameType.THESIMS2
+                    | utils.GameType.THESIMS2PETS
+                    | utils.GameType.THESIMS2CASTAWAY
+                    | utils.GameType.THESIMS3
+                ):
                     character = read_the_sims_2_character(file, endianness)
 
             if character is None or len(file.read(1)) != 0:
