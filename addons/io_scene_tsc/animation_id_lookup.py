@@ -65,8 +65,8 @@ def list_animation_ids_from_model_id(
             end_position = 946662
             objects_file_path = main_directory / "quickdat" / "SimsObjects"
         case utils.GameType.THESIMS3:
-            start_position = 0
-            end_position = 2454264
+            start_position = 847931
+            end_position = 1026640
             objects_file_path = main_directory / "binaries" / "allobjects.odf"
 
     try:
