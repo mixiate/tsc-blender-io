@@ -190,6 +190,7 @@ def read_mesh(file: typing.BinaryIO, version: int, endianness: str, scale: float
     bone_count = 0
     bone_ids = [0, 1, 2, 3]
     read_bone_weights = False
+    reset_bone_count = True
 
     while True:
         command = struct.unpack(endianness + 'B', file.read(1))[0]
@@ -296,7 +297,7 @@ def read_mesh(file: typing.BinaryIO, version: int, endianness: str, scale: float
 
                 previous_strip_end = previous_strip_end + position_count
 
-                if bone_count != 4:
+                if reset_bone_count:
                     bone_count = 0
             case 1:
                 bone_id = struct.unpack(endianness + 'H', file.read(2))[0]
@@ -310,6 +311,7 @@ def read_mesh(file: typing.BinaryIO, version: int, endianness: str, scale: float
             case 4:
                 bone_count = 4
                 read_bone_weights = True
+                reset_bone_count = False
             case 5:
                 read_bone_weights = False
             case 6:
