@@ -65,9 +65,14 @@ def list_animation_ids_from_model_id(
             end_position = 946662
             objects_file_path = main_directory / "quickdat" / "SimsObjects"
         case utils.GameType.THESIMS3:
-            start_position = 847931
-            end_position = 1026640
             objects_file_path = main_directory / "binaries" / "allobjects.odf"
+            match objects_file_path.stat().st_size:
+                case 3401865:  # prototype
+                    start_position = 1007283
+                    end_position = 1235971
+                case 2454265:  # retail
+                    start_position = 847931
+                    end_position = 1026640
 
     try:
         with objects_file_path.open(mode='rb') as file:
