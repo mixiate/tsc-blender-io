@@ -88,7 +88,7 @@ def import_model(
                 for normal in mesh.normals:
                     normal[0] = -normal[0]
 
-            if is_object and model_desc.game == utils.GameType.THESIMS3 and sub_model.main_mesh and invert_normals:
+            if is_object and model_desc.game == utils.GameType.THESIMS3 and invert_normals:
                 for normal in mesh.normals:
                     normal.negate()
 
