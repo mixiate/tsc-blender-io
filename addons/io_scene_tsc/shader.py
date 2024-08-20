@@ -64,9 +64,9 @@ def read_render_pass_the_urbz(file: typing.BinaryIO, endianness: str) -> RenderP
     file.read(1)
     post_texture_id_count = struct.unpack(endianness + 'B', file.read(1))[0]
     file.read(1)
-    post_texture_id_count_other = struct.unpack(endianness + 'B', file.read(1))[0]
+    post_texture_id_count_other = struct.unpack(endianness + 'H', file.read(2))[0]
 
-    if len(file.read(25)) != 25:
+    if len(file.read(24)) != 24:
         raise utils.FileReadError
 
     return RenderPass(
