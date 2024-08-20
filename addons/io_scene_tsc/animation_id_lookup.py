@@ -45,7 +45,7 @@ def list_animation_ids_from_model_id(
             end_position = 1833523
             objects_file_path = main_directory / "quickdat" / "SimsObjects"
         case utils.GameType.THESIMSBUSTINOUT:
-            start_position = 2868764
+            start_position = 2867964
             end_position = 2934816
             objects_file_path = main_directory / "quickdat" / "SimsObjects"
         case utils.GameType.THEURBZ:
