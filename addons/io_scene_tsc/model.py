@@ -299,6 +299,11 @@ def read_mesh(file: typing.BinaryIO, version: int, endianness: str, scale: float
 
                 if reset_bone_count:
                     bone_count = 0
+
+                if version == 0x45 and endianness == '<':
+                    unknown_length = struct.unpack(endianness + 'I', file.read(4))[0]
+                    file.read(unknown_length)
+
             case 1:
                 bone_id = struct.unpack(endianness + 'H', file.read(2))[0]
                 bone_index = struct.unpack(endianness + 'B', file.read(1))[0]
@@ -459,6 +464,8 @@ def read_model(file: typing.BinaryIO) -> Model:
             version, endianness, game_type = 0x3E, '<', GameType.THESIMS2PETS
         case 0x3E000000:
             version, endianness, game_type = 0x3E, '>', GameType.THESIMS2PETS
+        case 0x45:
+            version, endianness, game_type = 0x45, '<', GameType.THESIMS2CASTAWAY
         case 0x45000000:
             version, endianness, game_type = 0x45, '>', GameType.THESIMS2CASTAWAY
         case 0x48000000:

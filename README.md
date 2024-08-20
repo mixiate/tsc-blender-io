@@ -8,7 +8,7 @@ Blender 4.1.1 and 4.2 are supported.
 - The Urbz (Playstation 2, GameCube, Xbox)
 - The Sims 2 (Playstation 2, GameCube, Xbox)
 - The Sims 2 Pets (Playstation 2, GameCube, Wii)
-- The Sims 2 Castaway (Wii)
+- The Sims 2 Castaway (Playstation 2, Wii)
 - The Sims 3 (Wii)
 
 ### Features
