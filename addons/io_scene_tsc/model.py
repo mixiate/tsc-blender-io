@@ -260,6 +260,9 @@ def read_mesh(file: typing.BinaryIO, version: int, endianness: str, scale: float
 
                         index_count = struct.unpack(endianness + 'H', file.read(2))[0]
 
+                        if version <= 0x45:
+                            channel_count = int(((indices_data_length - 4) / index_count) / 2)
+
                         format_string = endianness + str(channel_count) + 'H'
 
                         indices_data = [
@@ -271,7 +274,7 @@ def read_mesh(file: typing.BinaryIO, version: int, endianness: str, scale: float
                                 indices += indices_data[0]
                                 indices_normals += indices_data[1]
                                 indices_uvs += indices_data[2]
-                            case 4:
+                            case 4 | 5 | 6:
                                 indices += indices_data[0]
                                 indices_normals += indices_data[1]
                                 indices_colors += indices_data[2]
