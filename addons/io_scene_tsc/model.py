@@ -453,6 +453,8 @@ def read_model(file: typing.BinaryIO) -> Model:
             version, endianness, game_type = 0x35, '>', GameType.THEURBZ
         case 0x3A:
             version, endianness, game_type = 0x3A, '<', GameType.THESIMS2
+        case 0x3A000000:
+            version, endianness, game_type = 0x3A, '>', GameType.THESIMS2
         case 0x3E:
             version, endianness, game_type = 0x3E, '<', GameType.THESIMS2PETS
         case 0x3E000000:
