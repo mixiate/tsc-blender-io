@@ -57,8 +57,8 @@ def list_animation_ids_from_model_id(
             end_position = 1040972
             objects_file_path = main_directory / "quickdat" / "SimsObjects"
         case utils.GameType.THESIMS2PETS:
-            start_position = 1125464
-            end_position = 1197748
+            start_position = 1124496
+            end_position = 1197700
             objects_file_path = main_directory / "quickdat" / "SimsObjects"
         case utils.GameType.THESIMS2CASTAWAY:
             start_position = 886652

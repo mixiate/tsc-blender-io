@@ -96,8 +96,8 @@ def read_render_pass_the_sims_2_pets(file: typing.BinaryIO, endianness: str) -> 
     texture_gen = struct.unpack(endianness + 'B', file.read(1))[0]
     file.read(2)
     post_texture_id_count = struct.unpack(endianness + 'B', file.read(1))[0]
-    file.read(2)
-    post_texture_id_count_other = struct.unpack(endianness + 'B', file.read(1))[0]
+    file.read(1)
+    post_texture_id_count_other = struct.unpack(endianness + 'H', file.read(2))[0]
 
     if len(file.read(24)) != 24:
         raise utils.FileReadError
