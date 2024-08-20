@@ -30,7 +30,7 @@ Blender 4.1.1 and 4.2 are supported.
 ```
 - Only files from the supported versions above will work!
 - The Xbox versions are recommended where available as they have uncompressed vertex data.
-- Textures must be extracted to image files.
+- [Textures must be extracted to image files](https://github.com/mixsims/tsc-texture-extractor).
 - To import a model, go to File -> Import -> The Sims, Bustin' Out, Urbz, 2, Pets, Castaway, 3.
 - Skeletons, object animations and textures will be automatically imported.
 - To import a sim animation, select the armature you want to apply it to and then import the animation file.
