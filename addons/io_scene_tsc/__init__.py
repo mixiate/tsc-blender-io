@@ -4,7 +4,7 @@ bl_info = {
     "name": "Import The Sims, Bustin' Out, Urbz, 2, Pets, Castaway, 3 format",
     "description": "Import models from the first generation of The Sims console games.",
     "author": "mix",
-    "version": (2, 4, 1),
+    "version": (2, 5, 0),
     "blender": (4, 1, 0),
     "location": "File > Import",
     "warning": "",
