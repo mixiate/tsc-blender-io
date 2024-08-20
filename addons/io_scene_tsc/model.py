@@ -248,7 +248,7 @@ def read_mesh(file: typing.BinaryIO, version: int, endianness: str, scale: float
                     file.read(position_count * 32)
 
                 if flags & MESH_FLAGS_HAS_INDICES:
-                    if version >= 0x3E:
+                    if endianness == '>':
                         unknown_count = struct.unpack(endianness + 'I', file.read(4))[0]
                         channel_count = struct.unpack(endianness + 'B', file.read(1))[0]
 
@@ -445,6 +445,8 @@ def read_model(file: typing.BinaryIO) -> Model:
             version, endianness, game_type = 0x00, '<', GameType.THESIMS
         case 0x01:
             version, endianness, game_type = 0x01, '<', GameType.THESIMSBUSTINOUT
+        case 0x00000100:
+            version, endianness, game_type = 0x01, '>', GameType.THESIMSBUSTINOUT
         case 0x35:
             version, endianness, game_type = 0x35, '<', GameType.THEURBZ
         case 0x3A:

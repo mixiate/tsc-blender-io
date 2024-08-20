@@ -4,7 +4,7 @@ Blender 4.1.1 and 4.2 are supported.
 
 ### Supported Games
 - The Sims (Xbox)
-- The Sims Bustin' Out (Xbox)
+- The Sims Bustin' Out (Playstation 2, GameCube, Xbox)
 - The Urbz (Xbox)
 - The Sims 2 (Xbox)
 - The Sims 2 Pets (Wii)
@@ -29,6 +29,7 @@ Blender 4.1.1 and 4.2 are supported.
     └───textures
 ```
 - Only files from the supported versions above will work!
+- The Xbox versions are recommended where available as they have uncompressed vertex data.
 - Textures must be extracted to image files.
 - To import a model, go to File -> Import -> The Sims, Bustin' Out, Urbz, 2, Pets, Castaway, 3.
 - Skeletons, object animations and textures will be automatically imported.
