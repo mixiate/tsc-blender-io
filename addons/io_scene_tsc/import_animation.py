@@ -1,6 +1,7 @@
 """Import animations."""
 
 import bpy
+import bpy_extras.anim_utils
 import itertools
 import logging
 import mathutils
@@ -11,9 +12,13 @@ from . import animation
 from . import utils
 
 
-def create_fcurve_data(action: bpy.types.Action, data_path: str, index: int, data: list[float]) -> None:
+def create_fcurve_data(anim_data: bpy.types.AnimData, data_path: str, index: int, data: list[float]) -> None:
     """Create the fcurve data for all frames at once."""
-    f_curve = action.fcurves.new(data_path, index=index)
+    if bpy.app.version[0] >= 5:
+        channelbag = bpy_extras.anim_utils.action_ensure_channelbag_for_slot(anim_data.action, anim_data.action_slot)
+        f_curve = channelbag.fcurves.new(data_path, index=index)
+    else:
+        f_curve = anim_data.action.fcurves.new(data_path, index=index)
     f_curve.keyframe_points.add(count=int(len(data) / 2))
     f_curve.keyframe_points.foreach_set("co", data)
     f_curve.update()
@@ -53,20 +58,23 @@ def import_animation(
         logger.info(f"Could not apply animation {anim_desc.name} to {armature_object.name}")  # noqa: G004
         return
 
-    armature_object.animation_data_create()
+    anim_data = armature_object.animation_data_create()
 
     action = bpy.data.actions.get(anim_desc.name)
     if action is not None:
-        armature_object.animation_data.action = action
+        anim_data.action = action
+        anim_data.action_slot = anim_data.action_suitable_slots[0]
 
-        track = armature_object.animation_data.nla_tracks.new(prev=None)
+        track = anim_data.nla_tracks.new(prev=None)
         track.name = anim_desc.name
         track.strips.new(anim_desc.name, 1, action)
 
         return
 
     action = bpy.data.actions.new(name=anim_desc.name)
-    armature_object.animation_data.action = action
+    anim_data.action = action
+    if bpy.app.version[0] >= 5:
+        anim_data.action_slot = action.slots.new(id_type='OBJECT', name="slot")
 
     action.frame_range = (1.0, anim_desc.frame_count)
 
@@ -89,10 +97,10 @@ def import_animation(
 
         if rotation_keyframes_w:
             data_path = pose_bone.path_from_id("rotation_quaternion")
-            create_fcurve_data(action, data_path, 0, rotation_keyframes_w)
-            create_fcurve_data(action, data_path, 1, rotation_keyframes_x)
-            create_fcurve_data(action, data_path, 2, rotation_keyframes_y)
-            create_fcurve_data(action, data_path, 3, rotation_keyframes_z)
+            create_fcurve_data(anim_data, data_path, 0, rotation_keyframes_w)
+            create_fcurve_data(anim_data, data_path, 1, rotation_keyframes_x)
+            create_fcurve_data(anim_data, data_path, 2, rotation_keyframes_y)
+            create_fcurve_data(anim_data, data_path, 3, rotation_keyframes_z)
 
         scale_keyframes_x = []
         scale_keyframes_y = []
@@ -108,9 +116,9 @@ def import_animation(
 
         if scale_keyframes_x:
             data_path = pose_bone.path_from_id("scale")
-            create_fcurve_data(action, data_path, 0, scale_keyframes_x)
-            create_fcurve_data(action, data_path, 1, scale_keyframes_y)
-            create_fcurve_data(action, data_path, 2, scale_keyframes_z)
+            create_fcurve_data(anim_data, data_path, 0, scale_keyframes_x)
+            create_fcurve_data(anim_data, data_path, 1, scale_keyframes_y)
+            create_fcurve_data(anim_data, data_path, 2, scale_keyframes_z)
 
         location_keyframes_x = []
         location_keyframes_y = []
@@ -126,11 +134,11 @@ def import_animation(
 
         if location_keyframes_x:
             data_path = pose_bone.path_from_id("location")
-            create_fcurve_data(action, data_path, 0, location_keyframes_x)
-            create_fcurve_data(action, data_path, 1, location_keyframes_y)
-            create_fcurve_data(action, data_path, 2, location_keyframes_z)
+            create_fcurve_data(anim_data, data_path, 0, location_keyframes_x)
+            create_fcurve_data(anim_data, data_path, 1, location_keyframes_y)
+            create_fcurve_data(anim_data, data_path, 2, location_keyframes_z)
 
-    track = armature_object.animation_data.nla_tracks.new(prev=None)
+    track = anim_data.nla_tracks.new(prev=None)
     track.name = anim_desc.name
     track.strips.new(anim_desc.name, 1, action)
     track.mute = True
