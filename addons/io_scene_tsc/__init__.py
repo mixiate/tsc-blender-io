@@ -77,6 +77,12 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default=False,
     )
 
+    backface_culling: bpy.props.BoolProperty(  # type: ignore[valid-type]
+        name="Backface Culling",
+        description="Enable backface culling on imported materials",
+        default=False,
+    )
+
     def execute(self, context: bpy.context) -> set[str]:
         """Execute the importing function."""
         import io
@@ -100,6 +106,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             flip_normals_x_axis=self.flip_normals_x_axis,
             invert_normals=self.invert_normals,
             cleanup_meshes=self.cleanup_meshes,
+            backface_culling=self.backface_culling,
         )
 
         log_output = log_stream.getvalue()
@@ -115,6 +122,7 @@ class TS1IOImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         col.prop(self, "flip_normals_x_axis")
         col.prop(self, "invert_normals")
         col.prop(self, "cleanup_meshes")
+        col.prop(self, "backface_culling")
 
 
 def menu_import(self: bpy.types.TOPBAR_MT_file_import, _: bpy.context) -> None:

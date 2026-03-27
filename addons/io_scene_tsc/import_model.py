@@ -28,6 +28,7 @@ def import_model(
     import_animations: bool,
     flip_normals_x_axis: bool,
     invert_normals: bool,
+    backface_culling: bool,
 ) -> list[bpy.types.Object]:
     """Import a model file."""
     model_desc = model.read_file(file_path)
@@ -221,6 +222,7 @@ def import_model(
                 mesh_desc.shader_id,
                 id_file_path_maps.shaders.get(),
                 id_file_path_maps.textures.get(),
+                backface_culling=backface_culling,
             )
 
             if material:

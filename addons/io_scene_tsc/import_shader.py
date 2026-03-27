@@ -13,6 +13,7 @@ def create_material(
     material_name: str,
     texture_file_path: pathlib.Path,
     *,
+    backface_culling: bool,
     has_alpha: bool,
 ) -> bpy.types.Material:
     """Create a material with the given texture file."""
@@ -58,6 +59,8 @@ def create_material(
             else:
                 material.node_tree.links.new(specular_image_node.outputs[0], principled_bsdf.inputs[12])
 
+        material.use_backface_culling = backface_culling
+
     return material
 
 
@@ -68,6 +71,8 @@ def import_shader(
     shader_id: int,
     shader_file_path_id_map: dict[int, pathlib.Path],
     texture_file_path_id_map: dict[int, pathlib.Path],
+    *,
+    backface_culling: bool,
 ) -> bpy.types.Material | None:
     """Import a shader and create a Blender material for it."""
     shader_file_path = shader_file_path_id_map.get(shader_id)
@@ -116,6 +121,7 @@ def import_shader(
                     shader_file_path.stem,
                     texture_file_path,
                     has_alpha=has_alpha,
+                    backface_culling=backface_culling,
                 )
 
     return material

@@ -20,6 +20,7 @@ def import_files(
     flip_normals_x_axis: bool,
     invert_normals: bool,
     cleanup_meshes: bool,
+    backface_culling: bool,
 ) -> None:
     """Import all the models in the selected files."""
     if bpy.ops.object.mode_set.poll():
@@ -47,6 +48,7 @@ def import_files(
                 import_animations=import_animations,
                 flip_normals_x_axis=flip_normals_x_axis,
                 invert_normals=invert_normals,
+                backface_culling=backface_culling,
             )
         except utils.FileReadError as _:  # noqa: PERF203
             if context.view_layer.objects.active is not None and context.view_layer.objects.active.type == 'ARMATURE':
