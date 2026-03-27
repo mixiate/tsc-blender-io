@@ -12,6 +12,7 @@ from . import utils
 def create_material(
     material_name: str,
     texture_file_path: pathlib.Path,
+    diffuse_color: tuple[float, float, float],
     *,
     backface_culling: bool,
     has_alpha: bool,
@@ -31,7 +32,19 @@ def create_material(
         image_node.image = image
 
         principled_bsdf = material.node_tree.nodes.get('Principled BSDF')
-        material.node_tree.links.new(image_node.outputs[0], principled_bsdf.inputs[0])
+
+        if diffuse_color != (1.0, 1.0, 1.0):
+            mix_node = material.node_tree.nodes.new('ShaderNodeMix')
+            mix_node.data_type = 'RGBA'
+            mix_node.blend_type = 'MULTIPLY'
+            mix_node.inputs['Factor'].default_value = 1.0
+            mix_node.inputs[7].default_value = [*diffuse_color, 1.0]
+
+            material.node_tree.links.new(image_node.outputs[0], mix_node.inputs[6])
+            material.node_tree.links.new(mix_node.outputs[2], principled_bsdf.inputs[0])
+        else:
+            material.node_tree.links.new(image_node.outputs[0], principled_bsdf.inputs[0])
+
         principled_bsdf.inputs[2].default_value = 1.0
         principled_bsdf.inputs[12].default_value = 0.0
 
@@ -120,6 +133,7 @@ def import_shader(
                 material = create_material(
                     shader_file_path.stem,
                     texture_file_path,
+                    shader_desc.diffuse_color,
                     has_alpha=has_alpha,
                     backface_culling=backface_culling,
                 )
