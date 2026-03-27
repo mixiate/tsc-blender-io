@@ -1,6 +1,6 @@
 ### TSC Blender IO is an add-on for [Blender](https://www.blender.org/) which allows you to import models from The Sims, The Sims Bustin' Out, The Urbz, The Sims 2, The Sims 2 Pets, The Sims 2 Castaway and The Sims 3.
 
-Blender versions 4.1.1 to 5.0 are supported.
+Blender versions 4.1.1 to 5.1 are supported.
 
 ### Supported Games
 - The Sims (Xbox)
