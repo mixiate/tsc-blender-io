@@ -151,8 +151,8 @@ def read_shader_the_sims(file: typing.BinaryIO, endianness: str) -> Shader:
 
     file.read(4)
 
-    ambient_color = struct.unpack(endianness + '3f', file.read(12))
     diffuse_color = struct.unpack(endianness + '3f', file.read(12))
+    ambient_color = struct.unpack(endianness + '3f', file.read(12))
 
     render_passes = [read_render_pass_the_sims(file, endianness) for _ in range(render_pass_count)]
 
@@ -189,8 +189,8 @@ def read_shader_the_sims_bustin_out(file: typing.BinaryIO, endianness: str) -> S
 
     file.read(4)
 
-    ambient_color = struct.unpack(endianness + '3f', file.read(12))
     diffuse_color = struct.unpack(endianness + '3f', file.read(12))
+    ambient_color = struct.unpack(endianness + '3f', file.read(12))
     file.read(12)
 
     file.read(24)
