@@ -31,7 +31,7 @@ def create_material(
 
         principled_bsdf = material.node_tree.nodes.get('Principled BSDF')
         material.node_tree.links.new(image_node.outputs[0], principled_bsdf.inputs[0])
-        principled_bsdf.inputs[2].default_value = 0.5
+        principled_bsdf.inputs[2].default_value = 1.0
         principled_bsdf.inputs[12].default_value = 0.0
 
         if image.depth == 32:
@@ -43,6 +43,8 @@ def create_material(
             texture_file_path.stem + " specular" + texture_file_path.suffix,
         )
         if specular_file_path.is_file():
+            principled_bsdf.inputs[2].default_value = 0.5
+
             specular_image = bpy.data.images.get(specular_file_path.name)
             if specular_image is None:
                 specular_image = bpy.data.images.load(specular_file_path.as_posix())
