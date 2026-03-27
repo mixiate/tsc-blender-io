@@ -45,8 +45,10 @@ def create_material(
         else:
             material.node_tree.links.new(image_node.outputs[0], principled_bsdf.inputs[0])
 
+        specular_ior_index = 13 if bpy.app.version[0] >= 5 else 12
+
         principled_bsdf.inputs[2].default_value = 1.0
-        principled_bsdf.inputs[12].default_value = 0.0
+        principled_bsdf.inputs[specular_ior_index].default_value = 0.0
 
         if image.depth == 32:
             material.node_tree.links.new(image_node.outputs[1], principled_bsdf.inputs[4])
@@ -70,7 +72,7 @@ def create_material(
                 material.node_tree.links.new(specular_image_node.outputs[0], principled_bsdf.inputs[4])
                 material.blend_method = 'HASHED'
             else:
-                material.node_tree.links.new(specular_image_node.outputs[0], principled_bsdf.inputs[12])
+                material.node_tree.links.new(specular_image_node.outputs[0], principled_bsdf.inputs[specular_ior_index])
 
         material.use_backface_culling = backface_culling
 
